@@ -5,8 +5,9 @@ import scala.collection.mutable.ArrayBuffer
 
 abstract class AstNode
 
-case class AstTable(val name: TokenIdentifier, val columns: Vector[TokenIdentifier], val constraints: AstBlock) extends AstNode
+case class AstTable(val name: TokenId, val columns: Vector[TokenId], val constraints: AstBlock) extends AstNode
 case class AstBlock(val statements: Vector[AstNode]) extends AstNode
+case class AstQueryStmt(val operator: TokenId, val values: Vector[TokenId]) extends AstNode
 
 case class CompileError(val location: SourceLocation,
                         val message: String) extends Exception(s"${location.file}:${location.line}:${location.column}: $message")
@@ -24,68 +25,64 @@ object Parser {
   }
 }
 
-class Parser(val scanner: Scanner) {
+/*
 
-  var token: Token = scanner.scan()
+  program = top-level*
+          | <eof>
+          ;
 
-  def accept[T](fn: PartialFunction[Token, T]): Option[T] = {
-    val tok = token
-    if (fn.isDefinedAt(tok)) {
-      token = scanner.scan()
-      Some(fn(tok))
-    } else {
-      None
-    }
-  }
+  top-level = "table" id id* table-body?
+            | <newline>
+            ;
 
-  def acceptMany[T](fn: PartialFunction[Token, T]): ArrayBuffer[T] = {
-    val buffer = new ArrayBuffer[T]()
-    while (fn.isDefinedAt(token)) {
-      buffer += fn(token)
-      token = scanner.scan()
-    }
-    buffer
-  }
+  query-stmt = id query-tuple ("," query-tuple)* ;
+  query-tuple = id+ ;
 
-  def require[T](expected: String)(fn: PartialFunction[Token, T]): T = {
-    accept(fn) match {
-      case Some(t) => t
-      case None => unexpected(expected)
-    }
-  }
+  table-body = "{" ( query-stmt* | <newline> ) "}"
 
-  def unexpected(expected: String): Nothing = {
-   throw new CompileError(token, s"Unexpected token ${token.toString}, expected $expected")
-  }
-
-  def acceptEnd() = accept { case TokenEnd() => } isDefined
+ */
+class Parser(scanner: Scanner) extends ParserBase(scanner) {
 
   def parse(): AstBlock = {
-    val block = new ArrayBuffer[AstNode]()
-
-    while (!acceptEnd()) {
-      accept {
-        case TokenNewline() => // Nop
-      } getOrElse {
-        block += parseTopLevel()
-      }
-    }
-
-    new AstBlock(block.toVector)
+    val block = untilAccept("", { case TokenEnd() => true }) { parseTopLevel() }.flatten.toVector
+    new AstBlock(block)
   }
 
-  def parseTopLevel(): AstNode = require[AstNode]("top-level statement") {
-    case KeywordTable() =>
-      val name = require("table name") { case t: TokenIdentifier => t }
-      val cols = acceptMany { case t: TokenIdentifier => t }
-      val block = acceptMaybeBlock() getOrElse new AstBlock(Vector[AstNode]())
-      new AstTable(name, cols.toVector, block)
+  def parseTopLevel(): Option[AstNode] = require("top-level statement") {
+    case table: KeywordTable => Some(finishTable())
+    case TokenNewline() => None
   }
 
-  def acceptMaybeBlock(): Option[AstBlock] = accept[AstBlock] {
+  def finishTable(): AstTable = {
+    val name = require("table name") { case id: TokenId => id }
+    val cols = acceptMany { case id: TokenId => id }.toVector
+    if (cols.isEmpty) errorHere(s"Expected at least one column for table ${name.id}")
+    val body = tryParseTableBody().getOrElse(new AstBlock(Vector[AstNode]()))
+    new AstTable(name, cols, body)
+  }
+
+  def tryParseTableBody(): Option[AstBlock] = accept {
     case TokenOpenBlock() =>
-      require("block closing '}'") { case TokenCloseBlock() => }
-      new AstBlock(Vector[AstNode]())
+      val stmt = untilAccept("table body", { case TokenCloseBlock() => true }) {
+        val ast: Option[Vector[AstQueryStmt]] = require("query statement") {
+          case TokenNewline() => None
+          case id: TokenId => Some(finishQueryStmt(id))
+        }
+        ast
+      }.flatten.flatten.toVector
+      new AstBlock(stmt)
+  }
+
+  def finishQueryStmt(name: TokenId): Vector[AstQueryStmt] = {
+    val first = parseQueryTuple()
+    val args = Vector[Vector[TokenId]](first) ++ acceptMany { case TokenComma() => parseQueryTuple() }
+    args.map(a => new AstQueryStmt(name, a))
+  }
+
+  def parseQueryTuple(): Vector[TokenId] = {
+    val result = acceptMany { case id: TokenId => id }.toVector
+    if (result.isEmpty) errorHere("Expected at least one query argument")
+    result
   }
 
 }

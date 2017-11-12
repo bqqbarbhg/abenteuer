@@ -17,7 +17,7 @@ abstract class Token {
   def location: SourceLocation = locationImpl
 }
 
-case class TokenIdentifier(id: String) extends Token
+case class TokenId(id: String) extends Token
 case class TokenNumber(value: Int) extends Token
 case class TokenString(value: String) extends Token {
   override def toString: String = s"""TokenString("${value.escape}")"""
@@ -26,6 +26,7 @@ case class TokenEnd() extends Token
 case class TokenNewline() extends Token
 case class TokenOpenBlock() extends Token
 case class TokenCloseBlock() extends Token
+case class TokenComma() extends Token
 
 case class KeywordTable() extends Token
 
@@ -34,7 +35,7 @@ object Scanner {
   val tok_identifier = (raw"""[A-Za-z]([A-Za-z0-9\-]*[A-Za-z0-9])?""".r,
     (m: Match) => m.group(0) match {
       case "table" => new KeywordTable
-      case identifier => new TokenIdentifier(identifier)
+      case identifier => new TokenId(identifier)
     })
   val tok_number = (raw"""[0-9]+""".r,
     (m: Match) => new TokenNumber(m.group(0).toInt))
@@ -45,10 +46,11 @@ object Scanner {
   val tok_newline = (raw"""\n""".r,
     (m: Match) => new TokenNewline)
 
-  val tok_operator = (s"[{}]".r,
+  val tok_operator = (s"[{},]".r,
     (m: Match) => m.group(0) match {
       case "{" => new TokenOpenBlock()
       case "}" => new TokenCloseBlock()
+      case "," => new TokenComma()
     })
 
   val re_whitespace = raw"""[ \r\t]+|#[^\n]*|\\\r?\n""".r
