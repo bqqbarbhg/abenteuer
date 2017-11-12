@@ -12,30 +12,30 @@ case class SourceLocation(file: String, line: Int, column: Int, data: String) {
   override def toString: String = s"[$file:$line:$column: ${data.escapeControl} ]"
 }
 
-abstract class Token
+abstract class Token {
+  var locationImpl: SourceLocation = null
+  def location: SourceLocation = locationImpl
+}
 
 case class TokenIdentifier(id: String) extends Token
 case class TokenNumber(value: Int) extends Token
 case class TokenString(value: String) extends Token {
   override def toString: String = s"""TokenString("${value.escape}")"""
 }
-case object TokenEnd extends Token
-case object TokenNewline extends Token
-case object TokenOpenBlock extends Token
-case object TokenCloseBlock extends Token
+case class TokenEnd() extends Token
+case class TokenNewline() extends Token
+case class TokenOpenBlock() extends Token
+case class TokenCloseBlock() extends Token
 
-case object KeywordTable extends Token
-
-case class Lexeme(token: Token, location: SourceLocation)
+case class KeywordTable() extends Token
 
 object Scanner {
 
-  val keywordMap = HashMap[String, Token]("table" -> KeywordTable)
-  val operatorMap = HashMap[String, Token]("{" -> TokenOpenBlock, "}" -> TokenCloseBlock)
-
   val tok_identifier = (raw"""[A-Za-z]([A-Za-z0-9\-]*[A-Za-z0-9])?""".r,
-    (m: Match) => keywordMap.getOrElse(m.group(0), new TokenIdentifier(m.group(0))))
-
+    (m: Match) => m.group(0) match {
+      case "table" => new KeywordTable
+      case identifier => new TokenIdentifier(identifier)
+    })
   val tok_number = (raw"""[0-9]+""".r,
     (m: Match) => new TokenNumber(m.group(0).toInt))
 
@@ -43,12 +43,15 @@ object Scanner {
     (m: Match) => new TokenString(m.group(2).unescape))
 
   val tok_newline = (raw"""\n""".r,
-    (m: Match) => TokenNewline)
+    (m: Match) => new TokenNewline)
 
-  val tok_operator = (s"[${operatorMap.keys.mkString("")}]".r,
-    (m: Match) => operatorMap(m.group(0)))
+  val tok_operator = (s"[{}]".r,
+    (m: Match) => m.group(0) match {
+      case "{" => new TokenOpenBlock()
+      case "}" => new TokenCloseBlock()
+    })
 
-  val re_whitespace = raw"""[ \r\t]+|#[^\n]*""".r
+  val re_whitespace = raw"""[ \r\t]+|#[^\n]*|\\\r?\n""".r
 
   val tokens = Array(tok_identifier, tok_number, tok_string, tok_newline, tok_operator)
 
@@ -59,8 +62,6 @@ class Scanner(val source: String, val filename: String) {
   var charOffset = 0
   var lineNumber = 1
   var previousLinebreakOffset = 0
-
-  var hasReportedEndOnce = false
 
   def sourceAtPosition = source.substring(charOffset)
 
@@ -78,7 +79,7 @@ class Scanner(val source: String, val filename: String) {
     * Throws an error on fail!
     * @return A lexeme if one is succesfully parsed
     */
-  def scan(): Lexeme = {
+  def scan(): Token = {
     skipWhitespace()
 
     val pos = sourceAtPosition
@@ -87,34 +88,32 @@ class Scanner(val source: String, val filename: String) {
         case Some(mat) =>
           val data = pos.substring(0, mat.end)
           val col = charOffset - previousLinebreakOffset + 1
-          val loc = new SourceLocation(filename, lineNumber, col, data)
           val token = tokenFunc(mat)
+          token.locationImpl = new SourceLocation(filename, lineNumber, col, data)
 
           charOffset += mat.end
-          if (token == TokenNewline) {
-            lineNumber += 1
-            previousLinebreakOffset = charOffset
+          token match {
+            case TokenNewline() =>
+              lineNumber += 1
+              previousLinebreakOffset = charOffset
+            case _ =>
           }
 
-          return new Lexeme(token, loc)
+          return token
         case None =>
       }
     }
 
     if (pos.length == 0) {
-      if (hasReportedEndOnce) {
-        throw new RuntimeException("Scanned past the end!")
-      }
-      hasReportedEndOnce = true
-
+      val col = charOffset - previousLinebreakOffset + 1
+      val token = new TokenEnd
+      token.locationImpl = new SourceLocation(filename, lineNumber, col, "")
+      token
+    } else {
       val col = charOffset - previousLinebreakOffset + 1
       val loc = new SourceLocation(filename, lineNumber, col, "")
-      return new Lexeme(TokenEnd, loc)
+      throw new CompileError(loc, s"Unexpected character ${pos.substring(0, 1).escapeControl}")
     }
-
-    // TODO: A custom exception class
-    val col = charOffset - previousLinebreakOffset + 1
-    throw new RuntimeException(s"Scanner fail at line $lineNumber:$col!")
   }
 
 }
