@@ -8,9 +8,7 @@ object ScannerTest extends App {
 
   val source =
     """
-# This is a test file
-long-identifier "string" #Inline comment
-123456
+       | print "Hello\nworld!"
     """.stripMargin
   val scanner = new Scanner(source, "inline")
   printTokens(scanner)

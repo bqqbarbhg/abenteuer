@@ -4,42 +4,53 @@ import util.EscapeUtil._
 import scala.util.matching.Regex
 import scala.util.matching.Regex.Match
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.immutable.HashMap
 import scala.annotation.tailrec
 import lang.Scanner._
 
 case class SourceLocation(file: String, line: Int, column: Int, data: String) {
-  override def toString: String = s"[$file:$line:$column: ${data.escape}]"
+  override def toString: String = s"[$file:$line:$column: ${data.escapeControl} ]"
 }
 
 abstract class Token
 
 case class TokenIdentifier(id: String) extends Token
 case class TokenNumber(value: Int) extends Token
-case class TokenString(value: String) extends Token
+case class TokenString(value: String) extends Token {
+  override def toString: String = s"""TokenString("${value.escape}")"""
+}
 case object TokenEnd extends Token
 case object TokenNewline extends Token
+case object TokenOpenBlock extends Token
+case object TokenCloseBlock extends Token
+
+case object KeywordTable extends Token
 
 case class Lexeme(token: Token, location: SourceLocation)
 
 object Scanner {
 
+  val keywordMap = HashMap[String, Token]("table" -> KeywordTable)
+  val operatorMap = HashMap[String, Token]("{" -> TokenOpenBlock, "}" -> TokenCloseBlock)
+
   val tok_identifier = (raw"""[A-Za-z]([A-Za-z0-9\-]*[A-Za-z0-9])?""".r,
-    (m: Match) => new TokenIdentifier(m.group(0)))
+    (m: Match) => keywordMap.getOrElse(m.group(0), new TokenIdentifier(m.group(0))))
 
   val tok_number = (raw"""[0-9]+""".r,
     (m: Match) => new TokenNumber(m.group(0).toInt))
 
   val tok_string = (raw"""("((\\[\\"nrt]|[^"\\])*)")""".r,
-    (m: Match) => new TokenString(m.group(0)))
+    (m: Match) => new TokenString(m.group(2).unescape))
 
   val tok_newline = (raw"""\n""".r,
     (m: Match) => TokenNewline)
 
+  val tok_operator = (s"[${operatorMap.keys.mkString("")}]".r,
+    (m: Match) => operatorMap(m.group(0)))
+
   val re_whitespace = raw"""[ \r\t]+|#[^\n]*""".r
 
-  val tokens = Array(tok_identifier, tok_number, tok_string, tok_newline)
-
-  val re_escape = raw"""\\.""".r
+  val tokens = Array(tok_identifier, tok_number, tok_string, tok_newline, tok_operator)
 
 }
 
