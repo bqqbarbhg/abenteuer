@@ -29,14 +29,18 @@ case class TokenCloseBlock() extends Token
 case class TokenComma() extends Token
 
 case class KeywordTable() extends Token
+case class KeywordEntity() extends Token
+case class KeywordRule() extends Token
 
 object Scanner {
 
   val tok_identifier = (raw"""[A-Za-z]([A-Za-z0-9\-]*[A-Za-z0-9])?""".r,
     (m: Match) => m.group(0) match {
       case "table" => new KeywordTable
+      case "entity" => new KeywordEntity
       case identifier => new TokenId(identifier)
     })
+
   val tok_number = (raw"""[0-9]+""".r,
     (m: Match) => new TokenNumber(m.group(0).toInt))
 

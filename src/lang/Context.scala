@@ -13,4 +13,11 @@ class Context {
     }
   }
 
+  def executeTables(root: AstNode): Unit = {
+  }
+
+  def executeAst(root: AstNode): Unit = {
+    executeTables(root)
+  }
+
 }

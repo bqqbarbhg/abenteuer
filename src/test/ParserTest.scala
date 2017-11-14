@@ -12,7 +12,20 @@ object ParserTest extends App {
       |   unordered self item
       | }
       |
-      | table simple self
+      | table player self
+      | table keyword self keyword
+      |
+      | entity Player {
+      |   keyword "player", "self", "me"
+      | }
+      |
+      | Entrance {
+      |   entity Room
+      |
+      |   entity Table {
+      |     in Room
+      |   }
+      | }
       |
     """.stripMargin
 
