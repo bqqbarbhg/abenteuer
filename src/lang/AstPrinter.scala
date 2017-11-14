@@ -12,15 +12,15 @@ object AstPrinter {
 
       case table: AstTable =>
         val block = table.constraints.prettyPrint(indent)
-        s"${it}table ${table.name.id} ${table.columns.map(_.id).mkString(" ")} $block"
+        s"table ${table.name.id} ${table.columns.map(_.id).mkString(" ")} $block"
 
       case entity: AstEntity =>
         val block = entity.statements.prettyPrint(indent)
-        s"${it}entity ${entity.name.id} $block"
+        s"entity ${entity.name.id} $block"
 
       case namespace: AstNamespace =>
         val block = namespace.block.prettyPrint(indent)
-        s"${it}${namespace.name.id} $block"
+        s"${namespace.name.id} $block"
 
       case query: AstFreeQuery =>
         query.queries.map(_.prettyPrint(indent)).mkString("\n")
@@ -29,15 +29,21 @@ object AstPrinter {
         if (block.statements.isEmpty) {
           "{ }"
         } else {
-          s"{\n${block.statements.map(_.prettyPrint(indent + 1)).mkString("\n")}\n$it}"
+          val it2 = it + "  "
+          s"{\n${block.statements.map(it2 + _.prettyPrint(indent + 1)).mkString("\n")}\n$it}"
         }
 
       case query: AstQueryStmt =>
-        "  " * indent + s"${query.operator.id} ${query.values.map(_.prettyPrint()).mkString(" ")}"
+        s"${query.operator.id} ${query.values.map(_.prettyPrint(indent)).mkString(" ")}"
+
+      case not: AstNotStmt =>
+        "! " + not.stmt.prettyPrint()
 
       case t: AstExId => t.token.id
       case t: AstExString => '"' + t.token.value.escape + '"'
       case t: AstExNumber => t.token.value.toString
+      case t: AstLambda =>
+          s"(${t.arguments.map(_.id).mkString(" ")}) ${t.pre.prettyPrint(indent)} -> ${t.post.prettyPrint(indent)}"
 
       }
     }

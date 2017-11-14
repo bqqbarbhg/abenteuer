@@ -6,26 +6,27 @@ object ParserTest extends App {
 
   val source =
     """
-      | # Table of who is holding what
-      | table has self item {
-      |   unique item, thing
-      |   unordered self item
+      |
+      | table try cmd func order { default order 0 }
+      | table do  cmd func order { default order 0 }
+      |
+      | table arg cmd index name
+      |
+      | entity cmd-get {
+      |   command
+      |   keyword "get", "take", "pick up"
+      |   arg 0 "item"
       | }
       |
-      | table player self
-      | table keyword self keyword
-      |
-      | entity Player {
-      |   keyword "player", "self", "me"
+      | try cmd-get (Item) {
+      |   reach Player Item
+      |   can-get Item
+      |   ! has Someone Item
       | }
       |
-      | Entrance {
-      |   entity Room
-      |
-      |   entity Table {
-      |     in Room
-      |   }
-      | }
+      | do cmd-get (Item) -> {
+      |   has Player Item
+      | } -1
       |
     """.stripMargin
 

@@ -26,7 +26,11 @@ case class TokenEnd() extends Token
 case class TokenNewline() extends Token
 case class TokenOpenBlock() extends Token
 case class TokenCloseBlock() extends Token
+case class TokenOpenParen() extends Token
+case class TokenCloseParen() extends Token
 case class TokenComma() extends Token
+case class TokenArrow() extends Token
+case class TokenNot() extends Token
 
 case class KeywordTable() extends Token
 case class KeywordEntity() extends Token
@@ -41,7 +45,7 @@ object Scanner {
       case identifier => new TokenId(identifier)
     })
 
-  val tok_number = (raw"""[0-9]+""".r,
+  val tok_number = (raw"""[+\-]?[0-9]+""".r,
     (m: Match) => new TokenNumber(m.group(0).toInt))
 
   val tok_string = (raw"""("((\\[\\"nrt]|[^"\\])*)")""".r,
@@ -50,11 +54,15 @@ object Scanner {
   val tok_newline = (raw"""\n""".r,
     (m: Match) => new TokenNewline)
 
-  val tok_operator = (s"[{},]".r,
+  val tok_operator = (s"[{}(),!]|->".r,
     (m: Match) => m.group(0) match {
       case "{" => new TokenOpenBlock()
       case "}" => new TokenCloseBlock()
+      case "(" => new TokenOpenParen()
+      case ")" => new TokenCloseParen()
       case "," => new TokenComma()
+      case "!" => new TokenNot()
+      case "->" => new TokenArrow()
     })
 
   val re_whitespace = raw"""[ \r\t]+|#[^\n]*|\\\r?\n""".r
@@ -118,7 +126,7 @@ class Scanner(val source: String, val filename: String) {
     } else {
       val col = charOffset - previousLinebreakOffset + 1
       val loc = new SourceLocation(filename, lineNumber, col, "")
-      throw new CompileError(loc, s"Unexpected character ${pos.substring(0, 1).escapeControl}")
+      throw new CompileError(loc, s"Unexpected character '${pos.substring(0, 1).escapeControl}'")
     }
   }
 
