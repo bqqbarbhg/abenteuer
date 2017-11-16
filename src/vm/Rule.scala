@@ -1,8 +1,8 @@
-package lang
+package vm
 
 import db.Pattern
 import db.Row
-import lang.Rule._
+import vm.Rule._
 
 import scala.collection.immutable.Vector
 import scala.collection.mutable.ArrayStack

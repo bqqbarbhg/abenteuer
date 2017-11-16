@@ -33,13 +33,21 @@ object AstPrinter {
           s"{\n${block.statements.map(it2 + _.prettyPrint(indent + 1)).mkString("\n")}\n$it}"
         }
 
+      case block: AstStmtBlock =>
+        if (block.statements.isEmpty) {
+          "{ }"
+        } else {
+          val it2 = it + "  "
+          s"{\n${block.statements.map(it2 + _.prettyPrint(indent + 1)).mkString("\n")}\n$it}"
+        }
+
       case query: AstQueryStmt =>
-        s"${query.operator.id} ${query.values.map(_.prettyPrint(indent)).mkString(" ")}"
+        s"${query.operator.prettyPrint()} ${query.values.map(_.prettyPrint(indent)).mkString(" ")}"
 
       case not: AstNotStmt =>
         "! " + not.stmt.prettyPrint()
 
-      case t: AstExId => t.token.id
+      case t: AstExName => t.path.map(_.id).mkString(".")
       case t: AstExString => '"' + t.token.value.escape + '"'
       case t: AstExNumber => t.token.value.toString
       case t: AstLambda =>

@@ -9,7 +9,8 @@ import scala.annotation.tailrec
 import lang.Scanner._
 
 case class SourceLocation(file: String, line: Int, column: Int, data: String) {
-  override def toString: String = s"[$file:$line:$column: ${data.escapeControl} ]"
+  def prefix: String = s"$file:$line:$column"
+  override def toString: String = s"[$prefix: ${data.escapeControl} ]"
 }
 
 abstract class Token {
@@ -29,6 +30,7 @@ case class TokenCloseBlock() extends Token
 case class TokenOpenParen() extends Token
 case class TokenCloseParen() extends Token
 case class TokenComma() extends Token
+case class TokenDot() extends Token
 case class TokenArrow() extends Token
 case class TokenNot() extends Token
 
@@ -54,13 +56,14 @@ object Scanner {
   val tok_newline = (raw"""\n""".r,
     (m: Match) => new TokenNewline)
 
-  val tok_operator = (s"[{}(),!]|->".r,
+  val tok_operator = (s"[{}(),.!]|->".r,
     (m: Match) => m.group(0) match {
       case "{" => new TokenOpenBlock()
       case "}" => new TokenCloseBlock()
       case "(" => new TokenOpenParen()
       case ")" => new TokenCloseParen()
       case "," => new TokenComma()
+      case "." => new TokenDot()
       case "!" => new TokenNot()
       case "->" => new TokenArrow()
     })

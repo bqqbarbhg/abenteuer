@@ -5,7 +5,7 @@ import scala.collection.immutable.Vector
 
 object RuleTest extends App {
 
-  val ctx = new lang.Context()
+  val ctx = new vm.Context()
 
   val tableHas = new db.Table(2)
   val tableName = new db.Table(2)
@@ -25,13 +25,13 @@ object RuleTest extends App {
   tableNoInventory.insert(db.Row("thing"))
 
   val binds = Vector("holder", "item", "name")
-  val conditions = Vector[lang.Condition](
-    new lang.QueryCondition("has", Vector(0, 1)),
-    new lang.NegationCondition(new lang.QueryCondition("noInventory", Vector(1))),
-    new lang.QueryCondition("name", Vector(1, 2))
+  val conditions = Vector[vm.Condition](
+    new vm.QueryCondition("has", Vector(0, 1)),
+    new vm.NegationCondition(new vm.QueryCondition("noInventory", Vector(1))),
+    new vm.QueryCondition("name", Vector(1, 2))
   )
 
-  val rule = new lang.Rule(binds, conditions)
+  val rule = new vm.Rule(binds, conditions)
   for (res <- rule.query(ctx)) {
     println(res.mkString(", "))
   }
