@@ -36,6 +36,7 @@ case class TokenNot() extends Token
 
 case class KeywordTable() extends Token
 case class KeywordEntity() extends Token
+case class KeywordDefine() extends Token
 case class KeywordRule() extends Token
 
 object Scanner {
@@ -44,6 +45,7 @@ object Scanner {
     (m: Match) => m.group(0) match {
       case "table" => new KeywordTable
       case "entity" => new KeywordEntity
+      case "define" => new KeywordDefine
       case identifier => new TokenId(identifier)
     })
 
@@ -53,7 +55,7 @@ object Scanner {
   val tok_string = (raw"""("((\\[\\"nrt]|[^"\\])*)")""".r,
     (m: Match) => new TokenString(m.group(2).unescape))
 
-  val tok_newline = (raw"""\n""".r,
+  val tok_newline = (raw"""[\n;]""".r,
     (m: Match) => new TokenNewline)
 
   val tok_operator = (s"[{}(),.!]|->".r,

@@ -1,5 +1,7 @@
 package vm
 
+import vm.TableConstraint._
+
 abstract class TableConstraint
 
 object TableConstraint {
@@ -13,5 +15,11 @@ object TableConstraint {
 
 class Table(val context: Context, val name: String, val columns: Vector[String], val constraints: Vector[TableConstraint]) {
 
+  val defaultValues = constraints.collect { case c: Default => c }.sortBy(c => columns.indexOf(c.col)).toVector
+  for ((dv, i) <- defaultValues.zipWithIndex) {
+    assert(Some(dv.col) == columns.lift(columns.size - defaultValues.size + i), "Default values must be in the last columns")
+  }
 
+  def maxColumns: Int = columns.length
+  def minColumns: Int = columns.length - defaultValues.length
 }

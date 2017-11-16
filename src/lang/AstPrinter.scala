@@ -6,21 +6,27 @@ object AstPrinter {
 
   implicit class AstWithPrettyPrint(val ast: AstNode) {
 
+    def prettyPrint: String = prettyPrint(0)
+
     def prettyPrint(indent: Int = 0): String = {
       val it = "  " * indent
       ast match {
 
       case table: AstTable =>
         val block = table.constraints.prettyPrint(indent)
-        s"table ${table.name.id} ${table.columns.map(_.id).mkString(" ")} $block"
+        s"table ${table.name.prettyPrint} ${table.columns.map(_.id).mkString(" ")} $block"
 
       case entity: AstEntity =>
         val block = entity.statements.prettyPrint(indent)
-        s"entity ${entity.name.id} $block"
+        s"entity ${entity.name.prettyPrint} $block"
+
+      case define: AstDefine =>
+        val value = define.value.prettyPrint
+        s"define ${define.name.prettyPrint} $value"
 
       case namespace: AstNamespace =>
         val block = namespace.block.prettyPrint(indent)
-        s"${namespace.name.id} $block"
+        s"${namespace.name.prettyPrint()} $block"
 
       case query: AstFreeQuery =>
         query.queries.map(_.prettyPrint(indent)).mkString("\n")
@@ -50,7 +56,7 @@ object AstPrinter {
       case t: AstExName => t.path.map(_.id).mkString(".")
       case t: AstExString => '"' + t.token.value.escape + '"'
       case t: AstExNumber => t.token.value.toString
-      case t: AstLambda =>
+      case t: AstExLambda =>
           s"(${t.arguments.map(_.id).mkString(" ")}) ${t.pre.prettyPrint(indent)} -> ${t.post.prettyPrint(indent)}"
 
       }

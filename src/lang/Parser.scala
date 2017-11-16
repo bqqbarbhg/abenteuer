@@ -7,11 +7,12 @@ abstract class AstNode(val representingToken: Token) {
   def loc = representingToken.location.prefix
 }
 
-case class AstTable(name: TokenId, columns: Vector[TokenId], constraints: AstStmtBlock) extends AstNode(name)
-case class AstEntity(name: TokenId, statements: AstStmtBlock) extends AstNode(name)
+case class AstTable(name: AstExName, columns: Vector[TokenId], constraints: AstStmtBlock) extends AstNode(name.path(0))
+case class AstEntity(name: AstExName, statements: AstStmtBlock) extends AstNode(name.path(0))
+case class AstDefine(name: AstExName, value: AstEx) extends AstNode(name.path(0))
 case class AstBlock(statements: Vector[AstNode], open: Token) extends AstNode(open)
 case class AstStmtBlock(statements: Vector[AstStmt], open: Token) extends AstNode(open)
-case class AstNamespace(name: TokenId, block: AstBlock) extends AstNode(name)
+case class AstNamespace(name: AstExName, block: AstBlock) extends AstNode(name.path(0))
 case class AstFreeQuery(queries: Vector[AstQueryStmt]) extends AstNode(queries(0).operator.path(0))
 
 abstract class AstStmt(representingToken: Token) extends AstNode(representingToken)
@@ -22,7 +23,7 @@ abstract class AstEx(representingToken: Token) extends AstNode(representingToken
 case class AstExName(path: Vector[TokenId]) extends AstEx(path(0))
 case class AstExString(token: TokenString) extends AstEx(token)
 case class AstExNumber(token: TokenNumber) extends AstEx(token)
-case class AstLambda(arguments: Vector[TokenId], pre: AstStmtBlock, post: AstStmtBlock, firstToken: Token) extends AstEx(firstToken)
+case class AstExLambda(arguments: Vector[TokenId], pre: AstStmtBlock, post: AstStmtBlock, firstToken: Token) extends AstEx(firstToken)
 
 case class CompileError(location: SourceLocation,
                         message: String) extends Exception(s"${location.file}:${location.line}:${location.column}: $message")
@@ -45,13 +46,14 @@ object Parser {
   program = top-level*
           | <eof> ;
 
-  top-level = "table" ID ID* query-body?
-            | "entity" ID query-body?
-            | ID "{" top-level* "}"
+  top-level = "table" ex-name ID* query-body?
+            | "entity" ex-name query-body?
+            | "define" ex-name query-tuple
+            | ex-name "{" top-level* "}"
             | query-stmt
             | <newline> ;
 
-  query-stmt = ID query-tuple ("," query-tuple)* ;
+  query-stmt = ex-name query-tuple ("," query-tuple)* ;
   query-tuple = expr* ;
   query-body = "{" ( "!"? query-stmt* | <newline> ) "}"
 
@@ -72,31 +74,42 @@ class Parser(scanner: Scanner) extends ParserBase(scanner) {
   def parseTopLevel(): Option[AstNode] = require("top-level statement") {
     case KeywordTable() => Some(finishTable())
     case KeywordEntity() => Some(finishEntity())
+    case KeywordDefine() => Some(finishDefine())
     case id: TokenId =>
+      val name = finishName(id)
       accept {
-        case t: TokenOpenBlock => Some(finishNamespace(id, t))
+        case t: TokenOpenBlock => Some(finishNamespace(name, t))
       }.getOrElse {
-        val queries = finishQueryStmt(finishName(id))
+        val queries = finishQueryStmt(name)
         Some(new AstFreeQuery(queries))
       }
     case TokenNewline() => None
   }
 
   def finishTable(): AstTable = {
-    val name = require("table name") { case id: TokenId => id }
+    val nameBegin = require("table name") { case id: TokenId => id }
+    val name = finishName(nameBegin)
     val cols = acceptMany { case id: TokenId => id }.toVector
-    if (cols.isEmpty) errorHere(s"Expected at least one column for table ${name.id}")
+    if (cols.isEmpty) errorHere(s"Expected at least one column for table ${name.path.last.id}")
     val body = tryParseQueryBody("table body").getOrElse(new AstStmtBlock(Vector[AstStmt](), firstToken))
     new AstTable(name, cols, body)
   }
 
   def finishEntity(): AstEntity = {
-    val name = require("entity name") { case id: TokenId => id }
+    val nameBegin = require("entity name") { case id: TokenId => id }
+    val name = finishName(nameBegin)
     val body = tryParseQueryBody("entiy body").getOrElse(new AstStmtBlock(Vector[AstStmt](), firstToken))
     new AstEntity(name, body)
   }
 
-  def finishNamespace(name: TokenId, open: TokenOpenBlock): AstNamespace = {
+  def finishDefine(): AstDefine = {
+    val nameBegin = require("define name") { case id: TokenId => id }
+    val name = finishName(nameBegin)
+    val value = require("define value")(parseQueryExpr)
+    new AstDefine(name, value)
+  }
+
+  def finishNamespace(name: AstExName, open: TokenOpenBlock): AstNamespace = {
     val block = untilAccept("", { case TokenCloseBlock() => true }) { parseTopLevel() }.flatten.toVector
     new AstNamespace(name, new AstBlock(block, open))
   }
@@ -143,7 +156,7 @@ class Parser(scanner: Scanner) extends ParserBase(scanner) {
     AstExName(Vector(first) ++ rest)
   }
 
-  def finishLambda(openParen: Token): AstLambda = {
+  def finishLambda(openParen: Token): AstExLambda = {
     val args = acceptMany { case t: TokenId => t }.toVector
     require("closing ')'") { case TokenCloseParen() => }
     val pre = tryParseQueryBody("lambda pre-body").getOrElse(new AstStmtBlock(Vector[AstStmt](), firstToken))
@@ -151,7 +164,7 @@ class Parser(scanner: Scanner) extends ParserBase(scanner) {
         tryParseQueryBody("lambda post-body").getOrElse { errorHere("Expected lambda post-body after '=>'") }
     } getOrElse(new AstStmtBlock(Vector[AstStmt](), firstToken))
 
-    new AstLambda(args, pre, post, openParen)
+    new AstExLambda(args, pre, post, openParen)
   }
 
 }

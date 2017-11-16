@@ -1,4 +1,6 @@
 package vm
 
-class Entity {
+class Entity(val debugName: String) {
+
+  override def toString: String = debugName
 }
