@@ -13,7 +13,9 @@ object TableConstraint {
   case class Default(col: String, value: Any) extends TableConstraint
 }
 
-class Table(val context: Context, val name: String, val columns: Vector[String], val constraints: Vector[TableConstraint]) {
+class Table(val context: Context, val name: String, val columns: Vector[String], val constraints: Vector[TableConstraint]) extends db.Queryable {
+
+  override def toString: String = s"Table($name ${columns.mkString(" ")})"
 
   val defaultValues = constraints.collect { case c: Default => c }.sortBy(c => columns.indexOf(c.col)).toVector
   for ((dv, i) <- defaultValues.zipWithIndex) {
@@ -22,4 +24,6 @@ class Table(val context: Context, val name: String, val columns: Vector[String],
 
   def maxColumns: Int = columns.length
   def minColumns: Int = columns.length - defaultValues.length
+
+  def query(pattern: db.Pattern): Iterator[db.Row] = ???
 }

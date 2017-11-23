@@ -37,6 +37,7 @@ object CodegenTest extends App {
     val context = new vm.Context()
     val cg = new lang.Codegen(context)
     cg.doCodegen(Vector(ast1, ast2))
+    println(context.queryables.mkString("\n"))
   }
 
   {

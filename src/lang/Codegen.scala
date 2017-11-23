@@ -35,7 +35,10 @@ case class NamedDefine(val value: AstEx, val ns: Namespace) extends NamedValue {
   override def what: String = "define"
 }
 
-class Namespace(val parent: Option[Namespace]) {
+class Namespace(val parent: Option[Namespace], val name: String) {
+  val fullName: String = parent.map(n => n.namespaced(name)).getOrElse("")
+
+  def namespaced(name: String) = if (fullName.nonEmpty) fullName + "." + name else name
 
   private val names: HashMap[String, NamedValue] = new HashMap[String, NamedValue]()
 
@@ -57,7 +60,7 @@ class Namespace(val parent: Option[Namespace]) {
       names.get(ns) match {
         case Some(NamedNamespace(child)) => child.create(name, value, index + 1)
         case None =>
-          val child = new Namespace(Some(this))
+          val child = new Namespace(Some(this), ns)
           child.create(name, value, index + 1)
           val nn = NamedNamespace(child)
           nn.representingToken = name.path(index)
@@ -106,7 +109,7 @@ class Namespace(val parent: Option[Namespace]) {
 
 class Codegen(val context: vm.Context) {
 
-  val rootNamespace = new Namespace(None)
+  val rootNamespace = new Namespace(None, "")
 
   def error(ast: AstNode, message: String): Nothing = {
     throw new RuntimeException(s"${ast.loc}: $message")
@@ -127,7 +130,7 @@ class Codegen(val context: vm.Context) {
     }
   }
 
-  private def evalLambda(lambda: AstExLambda, ns: Namespace): vm.Rule = ???
+  private def evalLambda(lambda: AstExLambda, ns: Namespace): vm.Function = new vm.Function(null, null)
 
   private def doConstraint(stmt: AstStmt, ns: Namespace): vm.TableConstraint = {
     val query = stmt match {
@@ -159,8 +162,11 @@ class Codegen(val context: vm.Context) {
 
   private def doTable(table: AstTable, ns: Namespace): Unit = {
     val constraints = table.constraints.statements.map(a => doConstraint(a, ns))
-    Try(new vm.Table(context, table.name.path.last.id, table.columns.map(_.id), constraints)) match {
-      case Success(tab) => ns.set(table.name, NamedTable(tab))
+    val name = ns.namespaced(table.name.path.map(_.id).mkString("."))
+    Try(new vm.Table(context, name, table.columns.map(_.id), constraints)) match {
+      case Success(tab) =>
+        ns.set(table.name, NamedTable(tab))
+        context.queryables(tab.name) = tab
       case Failure(err) => error(table, s"Failed to create table '${table.name.prettyPrint}': ${err.getMessage}")
     }
   }
@@ -210,7 +216,7 @@ class Codegen(val context: vm.Context) {
       val ns2 = ns.get(namespace.name, false) match {
         case Some(NamedNamespace(ns2)) => ns2
         case _ =>
-          val ns2 = new Namespace(Some(ns))
+          val ns2 = new Namespace(Some(ns), namespace.name.path.last.id)
           ns.create(namespace.name, NamedNamespace(ns2))
           ns2
       }
