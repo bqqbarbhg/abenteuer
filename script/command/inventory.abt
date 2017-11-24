@@ -4,7 +4,7 @@ entity inventory {
 	cmd.abbrev "inv" "inventory"
 	cmd.help "**inventory**: List items you're carrying"
 
-	cmd.try () {
+	cmd.do () {
 		has *Player Thing
 		name Thing Name
 		description Thing Desc

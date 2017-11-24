@@ -10,7 +10,7 @@ cmd {
 	}
 
 	# Functions to run when the commands are entered
-	table try cmd func order {
+	table do cmd func order {
 		# Order in which command functions are tried, from low
 		# to high.
 		default order 0
@@ -47,7 +47,7 @@ entity help {
 
 	cmd.help "**help**: Help for using the interface"
 
-	cmd.try () {
+	cmd.do () {
 		cmd.help Command Help
 	} -> {
 		print: Help

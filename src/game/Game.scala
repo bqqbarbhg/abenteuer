@@ -75,7 +75,7 @@ class Game {
   // Tables defined in the code
   val tabCmdKeyword = context.query[vm.Entity, String]("cmd.keyword") _
   val tabCmdSelect = context.query[vm.Entity, vm.Rule]("cmd.select") _
-  val tabCmdTry = context.query[vm.Entity, vm.Rule, Int]("cmd.try") _
+  val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
   val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
   val tabName = context.query[vm.Entity, String]("name") _
   val tabKeyword = context.query[vm.Entity, String]("keyword") _
@@ -161,7 +161,7 @@ class Game {
   }
 
   def executeCommandRule(command: vm.Entity, entity: Option[vm.Entity]): GameText = {
-    val tryRules = tabCmdTry(Some(command), None, None).toVector.sortBy(row => row._3).map(_._2)
+    val tryRules = tabCmdDo(Some(command), None, None).toVector.sortBy(row => row._3).map(_._2)
     val text = LangActions.listenToPrint {
       for (rule <- tryRules) {
         for (pattern <- rule.query(entity.map(Some(_)).toArray)) {

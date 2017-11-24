@@ -9,7 +9,7 @@ entity inspect {
 		object Thing
 	}
 
-	cmd.try (Thing) {
+	cmd.do (Thing) {
 		name Thing Name
 		description Thing Desc
 	} -> {

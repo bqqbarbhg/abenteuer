@@ -8,7 +8,7 @@ entity take {
 		! has Anyone Thing
 	}
 
-	cmd.try (Thing) {
+	cmd.do (Thing) {
 		name Thing Name
 	} -> {
 		has *Player Thing
@@ -24,7 +24,7 @@ entity drop {
 		has *Player Thing
 	}
 
-	cmd.try (Thing) {
+	cmd.do (Thing) {
 		name Thing Name
 	} -> {
 		! has *Player Thing
