@@ -136,6 +136,13 @@ class BindCollection(val args: Vector[TokenId]) {
   }
 }
 
+object Codegen {
+  def codegen(context: vm.Context, roots: Seq[AstNode]): Unit = {
+    val cg = new Codegen(context)
+    cg.doCodegen(roots)
+  }
+}
+
 class Codegen(val context: vm.Context) {
 
   val rootNamespace = new Namespace(None, "")
@@ -232,7 +239,7 @@ class Codegen(val context: vm.Context) {
     val binds = new BindCollection(lambda.arguments)
     val conditions = evalRuleBlock(lambda.pre, binds, ns)
     val actions = evalActionBlock(lambda.post, binds, ns)
-    new vm.Rule(binds.binds.toVector, lambda.arguments.map(_.id), conditions, actions, binds.constants.toVector)
+    new vm.Rule(context, binds.binds.toVector, lambda.arguments.map(_.id), conditions, actions, binds.constants.toVector)
   }
 
   private def doConstraint(stmt: AstStmt, ns: Namespace): vm.TableConstraint = {
@@ -369,7 +376,7 @@ class Codegen(val context: vm.Context) {
     case _ => // Nop
   }
 
-  def doCodegen(roots: Vector[AstNode]): Unit = {
+  def doCodegen(roots: Seq[AstNode]): Unit = {
     roots.foreach(a => doNamespaces(a, rootNamespace))
     roots.foreach(a => doTables(a, rootNamespace))
     roots.foreach(a => doEntities(a, rootNamespace))

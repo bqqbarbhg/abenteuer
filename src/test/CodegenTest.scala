@@ -51,30 +51,11 @@ object CodegenTest extends App {
 
   val sources = Map("source1" -> source1, "source2" -> source2)
 
-  def errorLine(loc: lang.SourceLocation): Unit = {
-    val src = sources(loc.file)
-    val lines = src.split('\n')
-    val line = lines(loc.line - 1).replace("\t", "  ")
-    var arrow = ""
-    for ((c, i) <- line.zipWithIndex) {
-      arrow += {
-        if (i < loc.column - 1) ' '
-        else if (i == loc.column - 1) '^'
-        else if (i < loc.column + loc.data.length - 2) '~'
-        else if (i == loc.column + loc.data.length - 2) '^'
-        else ' '
-      }
-    }
-
-    println(line.stripLineEnd)
-    println(arrow)
-  }
 
   try {
 
     val ast1 = lang.Parser.parse(source1, "source1")
     val ast2 = lang.Parser.parse(source2, "source2")
-
 
     println(ast1.prettyPrint)
     println(ast2.prettyPrint)
@@ -119,7 +100,7 @@ object CodegenTest extends App {
         println(rule.bindNames.mkString(" "))
 
         println("Query results:")
-        for (row2 <- rule.query(context)) {
+        for (row2 <- rule.query()) {
           println(row2.mkString(" "))
 
           rule.execute(row2)
@@ -130,9 +111,12 @@ object CodegenTest extends App {
   } catch {
     case err: CompileError =>
       println(err.getMessage)
-      errorLine(err.location)
-      for (loc <- err.auxLoc)
-        errorLine(loc)
+      val src = sources(err.location.file)
+      println(lang.Scanner.errorLine(src, err.location))
+      for (loc <- err.auxLoc) {
+        val src = sources(loc.file)
+        println(lang.Scanner.errorLine(src, loc))
+      }
   }
 }
 

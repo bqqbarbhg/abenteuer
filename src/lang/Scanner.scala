@@ -80,6 +80,22 @@ object Scanner {
 
   val tokens = Array(tok_identifier, tok_number, tok_string, tok_newline, tok_operator)
 
+  def errorLine(source: String, loc: lang.SourceLocation): String = {
+    val lines = source.split('\n')
+    val line = lines(loc.line - 1).replace("\t", "  ")
+    var arrow = ""
+    for ((c, i) <- line.zipWithIndex) {
+      arrow += {
+        if (i < loc.column) ' '
+        else if (i == loc.column) '^'
+        else if (i < loc.column + loc.data.length - 1) '~'
+        else if (i == loc.column + loc.data.length - 1) '^'
+        else ' '
+      }
+    }
+
+    line.stripLineEnd + "\n" + arrow
+  }
 }
 
 class Scanner(val source: String, val filename: String) {

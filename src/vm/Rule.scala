@@ -46,7 +46,7 @@ class NegationCondition(val condition: Condition) extends Condition {
   */
 class RuleCondition(val otherRule: Rule, val mapping: Vector[Int]) extends Condition {
   def query(context: Context, rule: Rule, binds: db.Pattern): Iterator[db.Pattern] = {
-    val it = otherRule.query(context, Some(rule.mapArgs(mapping, binds)))
+    val it = otherRule.query(rule.mapArgs(mapping, binds))
     new RemappingPatternIterator(it, binds, mapping)
   }
 }
@@ -134,7 +134,7 @@ object Rule {
   * @param actions List of actiosn that can be applied to the results of the query
   * @param constants List of constants used by the rule, indexed by negative mappings
   */
-class Rule(val bindNames: Vector[String], val argNames: Vector[String], val conditions: Vector[Condition], val actions: Vector[Action], val constants: Vector[Any]) {
+class Rule(val context: Context, val bindNames: Vector[String], val argNames: Vector[String], val conditions: Vector[Condition], val actions: Vector[Action], val constants: Vector[Any]) {
 
   override def toString: String = s"Rule(${argNames.mkString(" ")})"
 
@@ -142,11 +142,13 @@ class Rule(val bindNames: Vector[String], val argNames: Vector[String], val cond
     if (ix >= 0) binds(ix) else Some(this.constants(-1 - ix))
   }).toArray
 
-  def query(context: Context, initialBinds: Option[Pattern] = None): Iterator[db.Pattern] = {
+  def query(initialBinds: Pattern = Pattern()): Iterator[db.Pattern] = {
     conditions.length match {
       case 0 => new util.NoneIterator[db.Pattern]
       case _ =>
-        val binds = initialBinds.map(_.clone).getOrElse(Array.fill[Option[Any]](bindNames.length)(None))
+        val binds = Array.fill[Option[Any]](bindNames.length)(None)
+        for ((bind, ix) <- initialBinds.zipWithIndex)
+          binds(ix) = bind
         new ConditionIterator(this, context, binds)
     }
   }

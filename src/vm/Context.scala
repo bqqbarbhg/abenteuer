@@ -1,6 +1,7 @@
 package vm
 
 import scala.collection.mutable.HashMap
+import scala.reflect.ClassTag
 
 abstract class External
 case class ExternalAction(func: Action.ExternalFunc) extends External
@@ -26,6 +27,18 @@ class Context {
       case Some(queryable) => queryable.query(pattern)
       case None => new util.NoneIterator[db.Row]()
     }
+  }
+
+  def query[T1](table: String)(t1: Option[T1]): Iterator[T1] = {
+    query(table, db.Pattern(t1)).map(row => (row(0).asInstanceOf[T1]))
+  }
+
+  def query[T1, T2](table: String)(t1: Option[T1], t2: Option[T2]): Iterator[(T1, T2)] = {
+    query(table, db.Pattern(t1, t2)).map(row => (row(0).asInstanceOf[T1], row(1).asInstanceOf[T2]))
+  }
+
+  def query[T1, T2, T3](table: String)(t1: Option[T1], t2: Option[T2], t3: Option[T3]): Iterator[(T1, T2, T3)] = {
+    query(table, db.Pattern(t1, t2, t3)).map(row => (row(0).asInstanceOf[T1], row(1).asInstanceOf[T2], row(2).asInstanceOf[T3]))
   }
 
 }

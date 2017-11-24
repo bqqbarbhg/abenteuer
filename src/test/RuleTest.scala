@@ -31,8 +31,8 @@ object RuleTest extends App {
     new vm.QueryCondition("name", Vector(1, 2))
   )
 
-  val rule = new vm.Rule(binds, Vector[String](), conditions, Vector[vm.Action](), Vector[Any]())
-  for (res <- rule.query(ctx)) {
+  val rule = new vm.Rule(ctx, binds, Vector[String](), conditions, Vector[vm.Action](), Vector[Any]())
+  for (res <- rule.query()) {
     println(res.mkString(", "))
   }
 }

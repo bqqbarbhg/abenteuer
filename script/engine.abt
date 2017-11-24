@@ -1,0 +1,53 @@
+
+# Namespace for engine-level commands, the game understands this
+# and queries these tables.
+cmd {
+
+	# Keywords to use the command
+	table keyword cmd word {
+		# We don't want multiple commands with the same trigger
+		unique word 
+	}
+
+	# Functions to run when the commands are entered
+	table try cmd func order {
+		# Order in which command functions are tried, from low
+		# to high.
+		default order 0
+	}
+
+	# Helpful description of a command
+	table help cmd desc { }
+
+	# For commands that need to select an argument
+	table select cmd func { }
+
+} # cmd
+	
+# Print interpolated lines from commands
+external print "print"
+# Fail a command
+external fail "fail"
+
+# Keywords to describe entities
+table keyword self kw
+
+# A physical object that resides in the world
+table object self
+
+# Defines a way to differentiate objects
+table differentiate func
+
+# Help command
+entity help {
+	cmd.keyword "help"
+
+	cmd.help "help: Help for using the interface"
+
+	cmd.try () {
+		cmd.help Command Help
+	} -> {
+		print: Help
+	}
+}
+

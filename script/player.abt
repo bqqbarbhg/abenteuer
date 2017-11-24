@@ -1,0 +1,23 @@
+
+# Main player singleton instance
+entity Player {
+	object
+	keyword "self", "player", "me"
+	name "Player"
+	description "This is me"
+}
+
+entity Barrel {
+	object
+	keyword "barrel"
+	name "Barrel"
+	description "A boring barrel"
+}
+
+entity Barrel2 {
+	object
+	keyword "barrel"
+	name "Barrel"
+	description "Distinctively unique barrel"
+}
+

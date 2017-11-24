@@ -1,0 +1,7 @@
+
+# Name of an entity
+table name self name
+
+# Description of an entity, may have multiple for many lines
+table description self desc
+
