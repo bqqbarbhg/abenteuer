@@ -17,7 +17,7 @@ entity Barrel {
 entity Barrel2 {
 	object
 	keyword "barrel"
-	name "Barrel"
+	name "Barrel (shiny)"
 	description "Distinctively unique barrel"
 }
 
