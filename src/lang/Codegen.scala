@@ -2,10 +2,12 @@ package lang
 
 import scala.collection.immutable.Vector
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.Buffer
 import vm.TableConstraint
 import lang.AstPrinter.AstWithPrettyPrint
 
 import scala.util.{Failure, Success, Try}
+import util.EscapeUtil.EscapedString
 
 abstract class NamedValue {
   var representingToken: Token = null
@@ -13,9 +15,10 @@ abstract class NamedValue {
   def what: String
 }
 
-case class NamedTable(val tableName: vm.Table) extends NamedValue { override def what: String = "table" }
+case class NamedTable(val table: vm.Table) extends NamedValue { override def what: String = "table" }
 case class NamedEntity(val entity: vm.Entity) extends NamedValue { override def what: String = "entity" }
 case class NamedNamespace(val namespace: Namespace) extends NamedValue { override def what: String = "namespace" }
+case class NamedExternal(val external: vm.External) extends NamedValue { override def what: String = "external" }
 case class NamedDefine(val value: AstEx, val ns: Namespace) extends NamedValue {
   private var state = 0
   private var evaluatedValue: Option[Any] = None
@@ -107,30 +110,130 @@ class Namespace(val parent: Option[Namespace], val name: String) {
   }
 }
 
+class BindCollection(val args: Vector[TokenId]) {
+  val binds: Buffer[String] = args.map(_.id).toBuffer
+  val constants = Buffer[Any]()
+
+  def evalArg(cg: Codegen, ex: AstEx, ns: Namespace, allowCreate: Boolean): Int = ex match {
+    case t: AstExName =>
+      if (t.path.length > 1) cg.error(t, "Namespaces are not supported in local names!")
+      val name = t.path.head.id
+      binds.indexOf(name) match {
+        case -1 =>
+          if (!allowCreate) cg.error(t, s"Lambda post-block may not introduce new binds, but '${name}' is not defined!")
+          binds += name
+          binds.length - 1
+        case valid => valid
+      }
+    case ex =>
+      val value = cg.evalLiteralConstant(ex, ns)
+      constants.indexOf(value) match {
+        case -1 =>
+          constants += value
+          -(constants.length - 1) - 1
+        case valid => -valid
+      }
+  }
+}
+
 class Codegen(val context: vm.Context) {
 
   val rootNamespace = new Namespace(None, "")
 
-  def error(ast: AstNode, message: String): Nothing = {
-    throw new RuntimeException(s"${ast.loc}: $message")
+  def error(ast: AstNode, message: String, auxLoc: Any*): Nothing = {
+    throw new CompileError(ast.representingToken.location, message, auxLoc.map {
+      case t: Token => t.location
+      case a: AstNode => a.representingToken.location
+      case l: SourceLocation => l
+      case n: NamedValue => n.representingToken.location
+    }.toVector)
+  }
+
+  def error(token: Token, message: String): Nothing = {
+    throw new CompileError(token.location, message)
   }
 
   def evalLiteralConstant(ast: AstEx, ns: Namespace): Any = {
     ast match {
       case t: AstExName => ns.get(t) match {
-        case Some(e: NamedDefine) => e.eval(this).getOrElse { error(t, s"Cyclical dependency in define '${t.prettyPrint}', defined at ${e.loc}") }
+        case Some(e: NamedDefine) => e.eval(this).getOrElse { error(t, s"Cyclical dependency in define '${t.prettyPrint}', defined at ${e.loc}", e) }
         case Some(NamedEntity(e)) => e
-        case Some(something) => error(ast, s"'${t.prettyPrint}' is a ${something.what} instead of a literal value, see definition at ${something.loc}")
+        case Some(NamedExternal(e)) => e
+        case Some(something) => error(ast, s"'${t.prettyPrint}' is a ${something.what} instead of a literal value, see definition at ${something.loc}", something)
         case None => error(ast, s"Could not find literal value '${t.prettyPrint}'")
       }
       case t: AstExNumber => t.token.value
       case t: AstExString => t.token.value
       case t: AstExLambda => evalLambda(t, ns)
+      case t: AstExValueName => evalLiteralConstant(t.name, ns)
       case _ => error(ast, "Not a valid literal expression")
     }
   }
 
-  private def evalLambda(lambda: AstExLambda, ns: Namespace): vm.Function = new vm.Function(null, null)
+  private def getTable(name: AstExName, numArgs: Int, ns: Namespace): vm.Table = {
+    val table = ns.get(name) match {
+      case Some(NamedTable(table)) => table
+      case Some(other) => error(name, s"Expected a table, '${name.prettyPrint}' is ${other.what}, see ${other.loc}", other)
+      case None => error(name, s"Undefined table '${name.prettyPrint}'")
+    }
+
+    if (numArgs != table.maxColumns)
+      error(name, s"Table '${table.name}' has ${table.maxColumns} columns but pattern has ${numArgs}")
+
+    table
+  }
+
+  private def evalRuleBlock(block: AstStmtBlock, binds: BindCollection, ns: Namespace): Vector[vm.Condition] = {
+    def evalStmt(stmt: AstStmt): vm.Condition = stmt match {
+      case t: AstQueryStmt =>
+        val table = getTable(t.operator, t.values.length, ns)
+        val args = t.values.map(ex => binds.evalArg(this, ex, ns, true))
+        new vm.QueryCondition(table.name, args)
+
+      case t: AstNotStmt => new vm.NegationCondition(evalStmt(t.stmt))
+
+      case other => error(other, "Unexpected statement in query block")
+    }
+
+    block.statements.map(evalStmt).toVector
+  }
+
+  private def evalActionBlock(block: AstStmtBlock, binds: BindCollection, ns: Namespace): Vector[vm.Action] = {
+    def evalStmt(stmt: AstStmt): vm.Action = stmt match {
+      case t: AstQueryStmt =>
+        val table = getTable(t.operator, t.values.length, ns)
+        val args = t.values.map(ex => binds.evalArg(this, ex, ns, false))
+        new vm.TableUpdateAction(table, args)
+
+      case t: AstNotStmt =>
+        val query = t.stmt match {
+          case q: AstQueryStmt => q
+          case other => error(t.stmt, "Only negation of query statements is allowed in action blocks")
+        }
+        val table = getTable(query.operator, query.values.length, ns)
+        val args = query.values.map(ex => binds.evalArg(this, ex, ns, false))
+        new vm.TableDeleteAction(table, args)
+
+      case t: AstActionStmt =>
+        val args = t.query.values.map(ex => binds.evalArg(this, ex, ns, false))
+        evalLiteralConstant(t.query.operator, ns) match {
+          case func: vm.ExternalAction => new vm.ExternalFuncAction(func.func, args)
+          case rule: vm.Rule => new vm.RuleAction(rule, args)
+          case other => error(t.query.operator, s"Invalid action '${t.query.operator.prettyPrint}'")
+        }
+
+      case other => error(other, "Unexpected statement in action block")
+    }
+
+    block.statements.map(evalStmt).toVector
+  }
+
+  private def evalLambda(lambda: AstExLambda, ns: Namespace): vm.Rule = {
+    val binds = new BindCollection(lambda.arguments)
+    val conditions = evalRuleBlock(lambda.pre, binds, ns)
+    val actions = evalActionBlock(lambda.post, binds, ns)
+    new vm.Rule(binds.binds.toVector, lambda.arguments.map(_.id), conditions, actions, binds.constants.toVector)
+  }
 
   private def doConstraint(stmt: AstStmt, ns: Namespace): vm.TableConstraint = {
     val query = stmt match {
@@ -176,11 +279,11 @@ class Codegen(val context: vm.Context) {
       case t: AstQueryStmt =>
         val table = ns.get(t.operator) match {
           case Some(NamedTable(tab)) => tab
-          case Some(other) => error(t.operator, s"'${t.operator.prettyPrint}' is defined as a ${other.what}, not a table, see definition at ${other.loc}")
+          case Some(other) => error(t.operator, s"'${t.operator.prettyPrint}' is defined as a ${other.what}, not a table, see definition at ${other.loc}", other)
           case None => error(t.operator, s"Table not found: '${t.operator.prettyPrint}'")
         }
 
-        val values = (self ++ t.values.map(a => evalLiteralConstant(a, ns))).toVector
+        val values = (self ++ t.values.map(a => evalLiteralConstant(a, ns))).toArray
 
         if (values.length > table.maxColumns) {
           if (self.isDefined) {
@@ -196,6 +299,8 @@ class Codegen(val context: vm.Context) {
           }
         }
 
+        table.insert(values)
+
       case t: AstNotStmt => error(t, "Inverted statements are not supported in definitions")
     }
   }
@@ -203,7 +308,7 @@ class Codegen(val context: vm.Context) {
   private def doEntity(astEntity: AstEntity, ns: Namespace): Unit = {
     val entity = ns.get(astEntity.name) match {
       case Some(NamedEntity(e)) => e
-      case Some(other) => error(astEntity.name, s"Internal error: Entity clobbered by ${other.what} at ${other.loc} after namespace pass")
+      case Some(other) => error(astEntity.name, s"Internal error: Entity clobbered by ${other.what} at ${other.loc} after namespace pass", other)
       case None => error(astEntity.name, s"Internal error: Entity not defined after namespace pass")
     }
 
@@ -227,6 +332,12 @@ class Codegen(val context: vm.Context) {
     case astDefine: AstDefine =>
       val define = NamedDefine(astDefine.value, ns)
       ns.create(astDefine.name, define)
+    case astExternal: AstExternal =>
+      val value = context.externals.get(astExternal.foreign.value).getOrElse {
+        error(astExternal.foreign, s"External name '${astExternal.foreign.value.escape}' is not defined")
+      }
+      val external = NamedExternal(value)
+      ns.create(astExternal.name, external)
     case _ => // Nop
   }
 
@@ -234,13 +345,13 @@ class Codegen(val context: vm.Context) {
     case block: AstBlock => block.statements.foreach(a => doTables(a, ns))
     case namespace: AstNamespace => ns.get(namespace.name) match {
       case Some(NamedNamespace(ns2)) => doTables(namespace.block, ns2)
-      case Some(other) => error(namespace, s"Internal error: Namespace clobbered by ${other.what} at ${other.loc} after namespace pass")
+      case Some(other) => error(namespace, s"Internal error: Namespace clobbered by ${other.what} at ${other.loc} after namespace pass", other)
       case None => error(namespace, s"Internal error: Namespace not defined after namespace pass")
     }
     case astTable: AstTable => doTable(astTable, ns)
     case astDefine: AstDefine => ns.get(astDefine.name) match {
       case Some(nd: NamedDefine) => nd.eval(this)
-      case Some(other) => error(astDefine, s"Internal error: Define clobbered by ${other.what} at ${other.loc} after namespace pass")
+      case Some(other) => error(astDefine, s"Internal error: Define clobbered by ${other.what} at ${other.loc} after namespace pass", other)
       case None => error(astDefine, s"Internal error: Define not defined after namespace pass")
     }
     case _ => // Nop
@@ -250,10 +361,11 @@ class Codegen(val context: vm.Context) {
     case block: AstBlock => block.statements.foreach(a => doEntities(a, ns))
     case namespace: AstNamespace => ns.get(namespace.name) match {
       case Some(NamedNamespace(ns2)) => doEntities(namespace.block, ns2)
-      case Some(other) => error(namespace, s"Internal error: Namespace clobbered by ${other.what} at ${other.loc} after namespace pass")
+      case Some(other) => error(namespace, s"Internal error: Namespace clobbered by ${other.what} at ${other.loc} after namespace pass", other)
       case None => error(namespace, s"Internal error: Namespace not defined after namespace pass")
     }
     case astEntity: AstEntity => doEntity(astEntity, ns)
+    case astFreeQuery: AstFreeQuery => doStatements(None, astFreeQuery.queries, ns)
     case _ => // Nop
   }
 

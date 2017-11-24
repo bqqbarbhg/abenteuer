@@ -24,6 +24,9 @@ object AstPrinter {
         val value = define.value.prettyPrint
         s"define ${define.name.prettyPrint} $value"
 
+      case external: AstExternal =>
+        s"external ${external.name.prettyPrint} ${'"' + external.foreign.value.escape + '"'}"
+
       case namespace: AstNamespace =>
         val block = namespace.block.prettyPrint(indent)
         s"${namespace.name.prettyPrint()} $block"
@@ -53,11 +56,15 @@ object AstPrinter {
       case not: AstNotStmt =>
         "! " + not.stmt.prettyPrint()
 
+      case action: AstActionStmt =>
+        s"${action.query.operator.prettyPrint()}: ${action.query.values.map(_.prettyPrint(indent)).mkString(" ")}"
+
       case t: AstExName => t.path.map(_.id).mkString(".")
       case t: AstExString => '"' + t.token.value.escape + '"'
       case t: AstExNumber => t.token.value.toString
       case t: AstExLambda =>
-          s"(${t.arguments.map(_.id).mkString(" ")}) ${t.pre.prettyPrint(indent)} -> ${t.post.prettyPrint(indent)}"
+          s"(${t.arguments.map(_.id).mkString(" ")}) ${t.pre.prettyPrint(indent + 1)} -> ${t.post.prettyPrint(indent + 1)}"
+      case t: AstExValueName => "*" + t.name.prettyPrint
 
       }
     }

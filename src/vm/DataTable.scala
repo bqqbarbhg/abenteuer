@@ -17,13 +17,31 @@ class Table(val context: Context, val name: String, val columns: Vector[String],
 
   override def toString: String = s"Table($name ${columns.mkString(" ")})"
 
-  val defaultValues = constraints.collect { case c: Default => c }.sortBy(c => columns.indexOf(c.col)).toVector
-  for ((dv, i) <- defaultValues.zipWithIndex) {
-    assert(Some(dv.col) == columns.lift(columns.size - defaultValues.size + i), "Default values must be in the last columns")
+  val defaultColumns = constraints.collect { case c: Default => c }.sortBy(c => columns.indexOf(c.col)).toVector
+  for ((dv, i) <- defaultColumns.zipWithIndex) {
+    assert(Some(dv.col) == columns.lift(columns.size - defaultColumns.size + i), "Default values must be in the last columns")
   }
+  val defaultValues = defaultColumns.map(_.value)
+
+  val table = new db.Table(columns.length)
 
   def maxColumns: Int = columns.length
   def minColumns: Int = columns.length - defaultValues.length
 
-  def query(pattern: db.Pattern): Iterator[db.Row] = ???
+  def query(pattern: db.Pattern): Iterator[db.Row] = table.query(pattern)
+
+  def insert(values: db.Row): Unit = {
+    val paddedValues = if (values.length < columns.length) {
+      values ++ defaultValues.takeRight(columns.length - values.length)
+    } else {
+      values
+    }
+
+    table.insert(paddedValues)
+  }
+
+  def remove(values: db.Pattern): Unit = {
+    table.remove(values)
+  }
+
 }

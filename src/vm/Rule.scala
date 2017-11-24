@@ -9,7 +9,7 @@ import scala.collection.mutable.ArrayStack
 
 /** Any kind of condition that can be a part of a rule */
 trait Condition {
-  def query(context: Context, binds: db.Pattern): Iterator[db.Pattern]
+  def query(context: Context, rule: Rule, binds: db.Pattern): Iterator[db.Pattern]
 }
 
 /**
@@ -18,8 +18,8 @@ trait Condition {
   * @param mapping The query is formed by indirectly accessing bound values using these indices
   */
 class QueryCondition(val table: String, val mapping: Vector[Int]) extends Condition {
-  def query(context: Context, binds: db.Pattern): Iterator[db.Pattern] = {
-    val it = context.query(table, mapping.map(binds(_)).toArray)
+  def query(context: Context, rule: Rule, binds: db.Pattern): Iterator[db.Pattern] = {
+    val it = context.query(table, rule.mapArgs(mapping, binds))
     new RemappingRowIterator(it, binds, mapping)
   }
 }
@@ -30,8 +30,8 @@ class QueryCondition(val table: String, val mapping: Vector[Int]) extends Condit
   * @param condition Inner condition to negate
   */
 class NegationCondition(val condition: Condition) extends Condition {
-  def query(context: Context, binds: db.Pattern): Iterator[db.Pattern] = {
-    if (condition.query(context, binds).hasNext) {
+  def query(context: Context, rule: Rule, binds: db.Pattern): Iterator[db.Pattern] = {
+    if (condition.query(context, rule, binds).hasNext) {
       return new util.NoneIterator[db.Pattern]()
     } else {
       return new util.SingleValueIterator(binds)
@@ -44,9 +44,9 @@ class NegationCondition(val condition: Condition) extends Condition {
   * @param rule Inner rule to use as condition
   * @param mapping Translation between the rules' bindings (indices to the top level rule binds)
   */
-class RuleCondition(val rule: Rule, val mapping: Vector[Int]) extends Condition {
-  def query(context: Context, binds: db.Pattern): Iterator[db.Pattern] = {
-    val it = rule.query(context, Some(mapping.map(binds(_)).toArray))
+class RuleCondition(val otherRule: Rule, val mapping: Vector[Int]) extends Condition {
+  def query(context: Context, rule: Rule, binds: db.Pattern): Iterator[db.Pattern] = {
+    val it = otherRule.query(context, Some(rule.mapArgs(mapping, binds)))
     new RemappingPatternIterator(it, binds, mapping)
   }
 }
@@ -61,7 +61,8 @@ object Rule {
       val result = iterator.next()
       val copy = binds.clone()
       for ((ix, i) <- mapping.zipWithIndex) {
-        copy(ix) = Some(result(i))
+        if (ix >= 0)
+          copy(ix) = Some(result(i))
       }
       copy
     }
@@ -76,7 +77,8 @@ object Rule {
       val result = iterator.next()
       val copy = binds.clone()
       for ((ix, i) <- mapping.zipWithIndex) {
-        copy(ix) = result(i)
+        if (ix >= 0)
+          copy(ix) = result(i)
       }
       copy
     }
@@ -93,15 +95,14 @@ object Rule {
     *
     * Note: Expects to be only instantiated for rules with at least one condition!
     */
-  class ConditionIterator(val rule: Rule, val context: Context, val initialBinds: Option[Pattern]) extends util.SimpleIterator[db.Pattern] {
+  class ConditionIterator(val rule: Rule, val context: Context, val initialBinds: Pattern) extends util.SimpleIterator[db.Pattern] {
     // Would use ArrayStack but can't get over the fact that I know the exact amount of
     // elements we're gonna need so the dynamic scaling feels wasteful!
     val iterators = new Array[Iterator[db.Pattern]](rule.conditions.length)
     var top: Int = 1
 
     // Initialization: Query the first condition as this is done only once
-    val binds = initialBinds.getOrElse(Array.fill[Option[Any]](rule.bindNames.length)(None))
-    iterators(0) = rule.conditions(0).query(context, binds)
+    iterators(0) = rule.conditions(0).query(context, rule, initialBinds)
 
     def nextOption(): Option[db.Pattern] = {
       while (top < iterators.length || !iterators(top - 1).hasNext) {
@@ -112,7 +113,7 @@ object Rule {
 
         // Execute next condition
         val next = iterators(top - 1).next()
-        iterators(top) = rule.conditions(top).query(context, next)
+        iterators(top) = rule.conditions(top).query(context, rule, next)
         top += 1
       }
 
@@ -128,14 +129,31 @@ object Rule {
   * bound values that are shared between conditions and all the conditions have to
   * be satisfied for the _same_ bound values.
   * @param bindNames Names of the bindings, kinda like local variable names (mostly for debugging)
+  * @param argNames Names of the arguments to be provided for the query
   * @param conditions List of conditions required, kinda like instructions
+  * @param actions List of actiosn that can be applied to the results of the query
+  * @param constants List of constants used by the rule, indexed by negative mappings
   */
-class Rule(val bindNames: Vector[String], val conditions: Vector[Condition]) {
+class Rule(val bindNames: Vector[String], val argNames: Vector[String], val conditions: Vector[Condition], val actions: Vector[Action], val constants: Vector[Any]) {
+
+  override def toString: String = s"Rule(${argNames.mkString(" ")})"
+
+  def mapArgs(mapping: Vector[Int], binds: db.Pattern): db.Pattern = mapping.map(ix => {
+    if (ix >= 0) binds(ix) else Some(this.constants(-1 - ix))
+  }).toArray
 
   def query(context: Context, initialBinds: Option[Pattern] = None): Iterator[db.Pattern] = {
     conditions.length match {
       case 0 => new util.NoneIterator[db.Pattern]
-      case _ => new ConditionIterator(this, context, initialBinds)
+      case _ =>
+        val binds = initialBinds.map(_.clone).getOrElse(Array.fill[Option[Any]](bindNames.length)(None))
+        new ConditionIterator(this, context, binds)
+    }
+  }
+
+  def execute(binds: db.Pattern): Unit = {
+    for (action <- actions) {
+      action.run(this, binds)
     }
   }
 

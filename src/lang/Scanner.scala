@@ -33,11 +33,14 @@ case class TokenComma() extends Token
 case class TokenDot() extends Token
 case class TokenArrow() extends Token
 case class TokenNot() extends Token
+case class TokenValuePrefix() extends Token
+case class TokenColon() extends Token
 
 case class KeywordTable() extends Token
 case class KeywordEntity() extends Token
 case class KeywordDefine() extends Token
 case class KeywordRule() extends Token
+case class KeywordExternal() extends Token
 
 object Scanner {
 
@@ -46,6 +49,7 @@ object Scanner {
       case "table" => new KeywordTable
       case "entity" => new KeywordEntity
       case "define" => new KeywordDefine
+      case "external" => new KeywordExternal
       case identifier => new TokenId(identifier)
     })
 
@@ -58,16 +62,18 @@ object Scanner {
   val tok_newline = (raw"""[\n;]""".r,
     (m: Match) => new TokenNewline)
 
-  val tok_operator = (s"[{}(),.!]|->".r,
+  val tok_operator = (s"[{}(),.!*:]|->".r,
     (m: Match) => m.group(0) match {
-      case "{" => new TokenOpenBlock()
-      case "}" => new TokenCloseBlock()
-      case "(" => new TokenOpenParen()
-      case ")" => new TokenCloseParen()
-      case "," => new TokenComma()
-      case "." => new TokenDot()
-      case "!" => new TokenNot()
-      case "->" => new TokenArrow()
+      case "{" => new TokenOpenBlock
+      case "}" => new TokenCloseBlock
+      case "(" => new TokenOpenParen
+      case ")" => new TokenCloseParen
+      case "," => new TokenComma
+      case "." => new TokenDot
+      case "!" => new TokenNot
+      case "->" => new TokenArrow
+      case "*" => new TokenValuePrefix
+      case ":" => new TokenColon
     })
 
   val re_whitespace = raw"""[ \r\t]+|#[^\n]*|\\\r?\n""".r
