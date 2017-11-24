@@ -121,6 +121,8 @@ object Table {
   */
 class Table(val numColumns: Int) extends Queryable {
 
+  def arity: Int = numColumns
+
   /** Indexing store for every column */
   protected val dbIndices: Array[DbIndex] = Array.fill(numColumns) { new DbIndex() }
 

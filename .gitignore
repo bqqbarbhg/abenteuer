@@ -19,6 +19,12 @@
 .idea/**/gradle.xml
 .idea/**/libraries
 
+# Build artifacts
+.idea/artifacts
+
+# Artifact crap
+src/META-INF
+
 # CMake
 cmake-build-debug/
 

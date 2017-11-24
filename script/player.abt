@@ -22,3 +22,10 @@ entity Barrel2 {
 	description "Distinctively unique barrel"
 }
 
+entity Key {
+	object; item
+	keyword "key"
+	name "Master key"
+	description "A cool key that opens some doors"
+}
+

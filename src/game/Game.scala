@@ -50,10 +50,18 @@ class Game {
             |  **/hello** - Display startup message
             |  **/help** - Show this help
             |  **/title** - Get window title
-            |  **/query** - Query a value from a table
+            |  **/list** - Dump table contents
             |
             |""".stripMargin
           GameText(fmt(msg))
+
+        case "list" =>
+          parts.lift(1).flatMap(t => context.queryables.get(t)) match {
+            case Some(table) =>
+              val result = table.query(Array.fill[Option[Any]](table.arity)(None)).map(_.mkString(" ")).mkString("\n")
+              GameText(fmt(result), false)
+            case None => return GameText(fmt("Expected table name"), true)
+          }
 
         case other => GameText(fmt(s"Unknown command: **${other}**"), true)
       }
@@ -88,12 +96,14 @@ class Game {
           case Some(command) => command
           case None => return GameText(fmt("Nothing to select."), true)
         }
+        commandUnderSelect = None
+
         val selected = command.options.lift(index) match {
           case Some(selected) => selected
-          case None => return GameText(fmt(s"Invalid selection, select between 1 - ${command.options.length}."), true)
+          case None =>
+            return GameText(fmt(s"Invalid selection"), true)
         }
 
-        commandUnderSelect = None
         val result = executeCommandRule(command.command, Some(selected))
         return GameText(result.spans, result.ephemeral, Some(command.previousLine + " " + number))
       case None =>
@@ -124,8 +134,14 @@ class Game {
         options.toVector
       }
 
-      if (filteredOptions.size > 1) {
-        // Multiple options, show choices
+      if (filteredOptions.size == 0) {
+        // No options -> fail
+        GameText(fmt(s"Found nothing relevant to ${matchedKeyword}"), true)
+      } else if (filteredOptions.size == 1 && restOfLine.nonEmpty) {
+        // Single selected option -> execute command
+        executeCommandRule(cmd, Some(filteredOptions.head))
+      } else {
+        // Multiple or unselected options, show choices
         commandUnderSelect = Some(DelayedCommand(cmd, filteredOptions, line))
 
         val names = for ((option, index) <- filteredOptions.zipWithIndex) yield {
@@ -133,23 +149,14 @@ class Game {
           s"${index + 1}. ${name}"
         }
 
-        val prefix = s"Select by typing 1-${names.length}"
+        val prefix = if (names.length > 1) s"Select by typing 1-${names.length}" else "Select by typing 1"
         GameText(fmt(prefix + "\n" + names.mkString("\n")), true)
-      } else if (filteredOptions.size == 1) {
-        // Single option -> execute command
-        executeCommandRule(cmd, Some(filteredOptions.head))
-      } else {
-        // No options -> fail
-        GameText(fmt(s"Found nothing relevant to ${matchedKeyword}"), true)
       }
-
 
     } else {
       // Do non-selection command
       executeCommandRule(cmd, None)
-
     }
-
 
   }
 

@@ -45,7 +45,7 @@ table differentiate func
 entity help {
 	cmd.keyword "help"
 
-	cmd.help "help: Help for using the interface"
+	cmd.help "**help**: Help for using the interface"
 
 	cmd.try () {
 		cmd.help Command Help

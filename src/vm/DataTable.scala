@@ -24,6 +24,7 @@ class Table(val context: Context, val name: String, val columns: Vector[String],
   val defaultValues = defaultColumns.map(_.value)
 
   val table = new db.Table(columns.length)
+  def arity: Int = table.arity
 
   def maxColumns: Int = columns.length
   def minColumns: Int = columns.length - defaultValues.length

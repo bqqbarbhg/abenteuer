@@ -3,7 +3,7 @@ entity inspect {
 	cmd.keyword "inspect", "look at"
 	cmd.abbrev "i" "inspect"
 
-	cmd.help "inspect: Inspect finer details of objects"
+	cmd.help "**inspect**: Inspect finer details of objects"
 
 	cmd.select (Thing) {
 		object Thing

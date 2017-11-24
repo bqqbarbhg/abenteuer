@@ -29,6 +29,7 @@ package object db {
   }
 
   trait Queryable {
+    def arity: Int
     def query(pattern: Pattern): Iterator[Row]
   }
 }

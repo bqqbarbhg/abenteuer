@@ -143,13 +143,13 @@ class Rule(val context: Context, val bindNames: Vector[String], val argNames: Ve
   }).toArray
 
   def query(initialBinds: Pattern = Pattern()): Iterator[db.Pattern] = {
+    val binds = Array.fill[Option[Any]](bindNames.length)(None)
+    for ((bind, ix) <- initialBinds.zipWithIndex)
+      binds(ix) = bind
+
     conditions.length match {
-      case 0 => new util.NoneIterator[db.Pattern]
-      case _ =>
-        val binds = Array.fill[Option[Any]](bindNames.length)(None)
-        for ((bind, ix) <- initialBinds.zipWithIndex)
-          binds(ix) = bind
-        new ConditionIterator(this, context, binds)
+      case 0 => new util.SingleValueIterator(binds)
+      case _ => new ConditionIterator(this, context, binds)
     }
   }
 
