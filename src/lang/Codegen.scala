@@ -127,12 +127,15 @@ class BindCollection(val args: Vector[TokenId]) {
       }
     case ex =>
       val value = cg.evalLiteralConstant(ex, ns)
-      constants.indexOf(value) match {
+      val ix = constants.indexOf(value) match {
         case -1 =>
           constants += value
-          -(constants.length - 1) - 1
+          constants.length - 1
         case valid => -valid
       }
+
+      // Constants have purely negative indices, so first constant is -1
+      -ix - 1
   }
 }
 
@@ -180,6 +183,7 @@ class Codegen(val context: vm.Context) {
   private def getTable(name: AstExName, numArgs: Int, ns: Namespace): vm.Table = {
     val table = ns.get(name) match {
       case Some(NamedTable(table)) => table
+      // case Some(e: NamedDefine) => e.eval(this).getOrElse { error(t, s"Cyclical dependency in define '${t.prettyPrint}', defined at ${e.loc}", e) }
       case Some(other) => error(name, s"Expected a table, '${name.prettyPrint}' is ${other.what}, see ${other.loc}", other)
       case None => error(name, s"Undefined table '${name.prettyPrint}'")
     }

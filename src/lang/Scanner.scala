@@ -82,14 +82,14 @@ object Scanner {
 
   def errorLine(source: String, loc: lang.SourceLocation): String = {
     val lines = source.split('\n')
-    val line = lines(loc.line - 1).replace("\t", "  ")
+    val line = lines(loc.line - 1).replace("\t", " ")
     var arrow = ""
     for ((c, i) <- line.zipWithIndex) {
       arrow += {
-        if (i < loc.column) ' '
-        else if (i == loc.column) '^'
-        else if (i < loc.column + loc.data.length - 1) '~'
-        else if (i == loc.column + loc.data.length - 1) '^'
+        if (i < loc.column - 1) ' '
+        else if (i == loc.column - 1) '^'
+        else if (i < loc.column + loc.data.length - 2) '~'
+        else if (i == loc.column + loc.data.length - 2) '^'
         else ' '
       }
     }

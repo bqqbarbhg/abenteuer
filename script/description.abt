@@ -1,7 +1,7 @@
 
 # Name of an entity
-table name self name
+table name self name { unique self }
 
-# Description of an entity, may have multiple for many lines
-table description self desc
+# Short description of an entity
+table description self desc { unique self }
 

@@ -117,7 +117,7 @@ class Game {
     if (commandAndKeyword.isEmpty) return GameText(fmt("I don't know how to do that"), true)
     val (cmd, matchedKeyword) = commandAndKeyword.get
 
-    val restOfLine = line.drop(matchedKeyword.length).trim
+    val restOfLine = if (line.startsWith(matchedKeyword)) line.drop(matchedKeyword.length).trim else line.drop(parts(0).length).trim
 
     val selectRules = tabCmdSelect(Some(cmd), None).map(_._2).toStream
     if (!selectRules.isEmpty) {
@@ -160,14 +160,20 @@ class Game {
 
   }
 
+  private def executeRuleChain(rules: Vector[vm.Rule], entity: Option[vm.Entity]): Unit = {
+    for (rule <- rules) {
+      for (pattern <- rule.query(entity.map(Some(_)).toArray).toVector) {
+        rule.execute(pattern)
+        if (LangActions.hasFailed) return
+      }
+    }
+  }
+
   def executeCommandRule(command: vm.Entity, entity: Option[vm.Entity]): GameText = {
+    LangActions.hasFailed = false
     val tryRules = tabCmdDo(Some(command), None, None).toVector.sortBy(row => row._3).map(_._2)
     val text = LangActions.listenToPrint {
-      for (rule <- tryRules) {
-        for (pattern <- rule.query(entity.map(Some(_)).toArray)) {
-          rule.execute(pattern)
-        }
-      }
+      executeRuleChain(tryRules, entity)
     }
     GameText(fmt(text.mkString("\n")))
   }

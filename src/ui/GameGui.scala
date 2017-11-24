@@ -57,6 +57,9 @@ object GameGui extends SimpleSwingApplication {
           this.input.text = ""
           if (command.nonEmpty) {
 
+            // Reset caret to end to enable autoscroll to bottom
+            output.caret.position = doc.getLength
+
             for (begin <- ephemeralBegin) {
               doc.remove(begin, doc.getLength - begin)
               ephemeralBegin = None

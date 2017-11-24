@@ -8,6 +8,8 @@ object LangActions {
   var printTarget: Option[ArrayBuffer[String]] = None
   val templateRegex = raw"""\{([^}]*)\}""".r
 
+  var hasFailed: Boolean = false
+
   def listenToPrint(block: => Unit): ArrayBuffer[String] = {
     val buffer = new ArrayBuffer[String]()
     printTarget = Some(buffer)
@@ -32,7 +34,7 @@ object LangActions {
   }
 
   def fail(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {
-    println("Hello world!")
+    hasFailed = true
   }
 
 }
