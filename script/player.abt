@@ -2,6 +2,7 @@
 # Main player singleton instance
 entity Player {
 	object
+
 	keyword "self", "player", "me"
 	name "Player"
 	description "This is me"

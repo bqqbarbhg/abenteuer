@@ -18,6 +18,7 @@ object GameStdio extends App {
     Console.flush()
     val line = scala.io.StdIn.readLine()
     val result = theGame.interact(line)
+    result.overridePrompt.foreach(prompt => println(s"> $prompt"))
     appendSpans(result.spans)
   }
 

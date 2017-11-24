@@ -64,8 +64,11 @@ object GameGui extends SimpleSwingApplication {
 
             val begin = doc.getLength
             val result = theGame.interact(command)
+            val prompt = result.overridePrompt.getOrElse(command)
 
-            doc.insertString(doc.getLength, s"> ${command}\n", faded)
+            doc.insertString(doc.getLength, "\n", spacer)
+            doc.insertString(doc.getLength, "\n", spacer)
+            doc.insertString(doc.getLength, s"> ${prompt}\n", faded)
             doc.insertString(doc.getLength, "\n", spacer)
 
             appendSpans(result.spans)

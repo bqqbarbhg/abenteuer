@@ -1,10 +1,15 @@
 package game
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.{Try, Success, Failure}
 
-case class GameText(spans: Vector[ui.TextSpan], ephemeral: Boolean = false)
+case class GameText(spans: Vector[ui.TextSpan], ephemeral: Boolean = false, overridePrompt: Option[String] = None)
+
+case class DelayedCommand(command: vm.Entity, options: Vector[vm.Entity], previousLine: String)
 
 class Game {
+
+  val context = Initialization.compileGame()
 
   private def fmt(str: String): Vector[ui.TextSpan] = {
     val parts = str.split("\\*\\*")
@@ -53,8 +58,111 @@ class Game {
         case other => GameText(fmt(s"Unknown command: **${other}**"), true)
       }
     } else {
-      GameText(fmt("Temporary response"), true)
+      runCommand(input)
     }
+  }
+
+  val tokenRegex = raw"""[a-z]+""".r
+
+  // Tables defined in the code
+  val tabCmdKeyword = context.query[vm.Entity, String]("cmd.keyword") _
+  val tabCmdSelect = context.query[vm.Entity, vm.Rule]("cmd.select") _
+  val tabCmdTry = context.query[vm.Entity, vm.Rule, Int]("cmd.try") _
+  val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
+  val tabName = context.query[vm.Entity, String]("name") _
+  val tabKeyword = context.query[vm.Entity, String]("keyword") _
+
+  var commandUnderSelect: Option[DelayedCommand] = None
+
+  def runCommand(command: String): GameText = {
+    val lower = command.toLowerCase
+    val parts = tokenRegex.findAllIn(lower).toVector
+    val line = parts.mkString(" ")
+
+    // If there is a selection prompt do it
+    Try(lower.trim.toInt).toOption match {
+      case Some(number) =>
+        val index = number - 1
+
+        val command = commandUnderSelect match {
+          case Some(command) => command
+          case None => return GameText(fmt("Nothing to select."), true)
+        }
+        val selected = command.options.lift(index) match {
+          case Some(selected) => selected
+          case None => return GameText(fmt(s"Invalid selection, select between 1 - ${command.options.length}."), true)
+        }
+
+        commandUnderSelect = None
+        val result = executeCommandRule(command.command, Some(selected))
+        return GameText(result.spans, result.ephemeral, Some(command.previousLine + " " + number))
+      case None =>
+        commandUnderSelect = None
+    }
+
+    val commandAndKeyword = tabCmdKeyword(None, None).find(kw => line.startsWith(kw._2)).orElse {
+      parts.lift(0).flatMap(part => tabCmdAbbrev(None, Some(part), None).map(ab => (ab._1, ab._3)).toStream.headOption)
+    }
+
+    if (commandAndKeyword.isEmpty) return GameText(fmt("I don't know how to do that"), true)
+    val (cmd, matchedKeyword) = commandAndKeyword.get
+
+    val restOfLine = line.drop(matchedKeyword.length).trim
+
+    val selectRules = tabCmdSelect(Some(cmd), None).map(_._2).toStream
+    if (!selectRules.isEmpty) {
+      // Do selection based command
+
+      // Gather all entities that match the selection of the command
+      val options = selectRules.flatMap(_.query()).map(_(0).get.asInstanceOf[vm.Entity]).toSet
+
+      val filteredOptions = if (restOfLine.nonEmpty) {
+        // Filter to entities with matching keywords
+        options.filter(e => tabKeyword(Some(e), None).exists(row => row._2 == restOfLine)).toVector
+      } else {
+        // Show all of them
+        options.toVector
+      }
+
+      if (filteredOptions.size > 1) {
+        // Multiple options, show choices
+        commandUnderSelect = Some(DelayedCommand(cmd, filteredOptions, line))
+
+        val names = for ((option, index) <- filteredOptions.zipWithIndex) yield {
+          val name = tabName(Some(option), None).toStream.headOption.map(_._2).getOrElse("(unknown)")
+          s"${index + 1}. ${name}"
+        }
+
+        val prefix = s"Select by typing 1-${names.length}"
+        GameText(fmt(prefix + "\n" + names.mkString("\n")), true)
+      } else if (filteredOptions.size == 1) {
+        // Single option -> execute command
+        executeCommandRule(cmd, Some(filteredOptions.head))
+      } else {
+        // No options -> fail
+        GameText(fmt(s"Found nothing relevant to ${matchedKeyword}"), true)
+      }
+
+
+    } else {
+      // Do non-selection command
+      executeCommandRule(cmd, None)
+
+    }
+
+
+  }
+
+  def executeCommandRule(command: vm.Entity, entity: Option[vm.Entity]): GameText = {
+    val tryRules = tabCmdTry(Some(command), None, None).toVector.sortBy(row => row._3).map(_._2)
+    val text = LangActions.listenToPrint {
+      for (rule <- tryRules) {
+        for (pattern <- rule.query(entity.map(Some(_)).toArray)) {
+          rule.execute(pattern)
+        }
+      }
+    }
+    GameText(fmt(text.mkString("\n")))
   }
 
 }
