@@ -3,6 +3,8 @@ table door self a b { unordered a b }
 table is-open self
 table lock self key-type
 table key self key-type
+table pickable-lock self
+table lockpick self
 
 cmd.do go (Link) {
 	room *Player Room
@@ -35,6 +37,19 @@ entity open {
 		is-open Lock
 		fail:; print: "You open **{LockName}** with **{KeyName}**"
 	}
+
+	cmd.do (Lock) {
+		lock Lock KeyType
+		pickable-lock Lock
+		has Player Pick
+		lockpick Pick
+		name Lock LockName
+		name Pick PickName
+	} -> {
+		is-open Lock
+		fail:; print: "You open **{LockName}** with **{PickName}**"
+	} 5
+
 
 	cmd.do (Lock) {
 		lock Lock KeyType

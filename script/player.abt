@@ -27,6 +27,7 @@ entity Office-Door {
 	door Entrance Office, Office Entrance
 	room Entrance, Office
 	lock Office-Key-Type
+	pickable-lock
 }
 
 entity Office-Key-Type {
@@ -71,5 +72,13 @@ entity Key {
 	flavor "The key's handle is carved into a shape of an skull"
 	room Entrance
 	key Office-Key-Type
+}
+
+entity Lockpick {
+	object; item; lockpick
+	keyword "lockpick", "pick"
+	name "Lockpick"
+	description "A standard lockpick"
+	room Corridor
 }
 
