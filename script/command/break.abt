@@ -7,8 +7,6 @@ entity command.break {
 		room *Player Room
 		room Thing Room
 		breakable Thing Force
-		has *Player Item
-		break-tool Item Force
 		! open Thing
 	}
 
@@ -16,12 +14,16 @@ entity command.break {
 		breakable Thing Force
 		has *Player Item
 		break-tool Item Force
-		! open Thing
 	} -> {
 		open Thing
 		print: "You break **{name:Thing}** with **{name:Item}**"
 		fail:
 	}
+
+	cmd.do (Thing) -> {
+		print: "You don't have anything heavy enough to break **{name:Thing}**"
+		fail:
+	} 10
 
 }
 

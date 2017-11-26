@@ -646,6 +646,43 @@ cmd.do take (Thing) {
 } -100
 ```
 
+Postmortem
+----------
+
+The development was extremely fast with the */reload* and */replay* commands
+that recompile the game and respectively restart the game or play all your
+previous moves to get you back to the state before restarting. This shortens
+the iteration time to a minimum.
+
+There are some pretty obvious flaws with the scripting system, as it's still
+a little too rigid. If I had time to properly implement calling functions from
+the script it would have helped a lot I think.
+
+Also there is no real way to express things like counting or sorting/ordering
+thing _in the script_.
+
+There should probably be a way to override tables with functions. For example
+if there is a guard guarding a room it may be expressed as:
+```
+guard Enemy Room
+
+cmd.do command.go (Link) {
+	guard Guard Link Message
+} -> {
+	print: "**{name:Guard}**: {Message}"
+	fail:
+} -10
+```
+There is no way to do it non-locally, if we would add some *distracted* table
+it would add state to toggle which is no good.
+
+One solution to this would be some kind of new `condition` structure that you
+can override from other places.
+
+Another problem is the code duplication in the split *select*/*do* system for
+the commands. There really should be some way to pass data between those two
+phases.
+
 [vim]: http://vim.org
 [wiki-ebnf]: https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
 
