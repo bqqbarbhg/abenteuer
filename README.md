@@ -256,7 +256,7 @@ This is the only thing that depends on the Swing *.jar* so if there is no way
 to get it working you should be able to just remove `GameGui.scala` from the
 build and carry on.
 
-![Screenshot of GameGui]("gui-screenshot.png")
+![Screenshot of GameGui]("https://github.com/bqqbarbhg/abenteuer/raw/master/gui-screenshot.png")
 
 #### *GameServer*
 
