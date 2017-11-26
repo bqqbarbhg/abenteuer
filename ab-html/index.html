@@ -1,0 +1,50 @@
+<html>
+<head>
+	<title>AbHtml</title>
+
+	<style>
+		body {
+			font-family: sans-serif;
+		}
+		.out {
+			font-family: sans-serif;
+		}
+		.out-bold {
+			font-weight: bold;
+		}
+		.out-spacer {
+			font-size: 0.2em;
+		}
+		.out-command {
+			color: #777;
+		}
+		#output {
+			width: 80vh;
+			height: 80vh;
+			overflow-y: scroll;
+			word-wrap: break-word;
+			margin: 0.5em;
+		}
+		#input {
+			margin: 0.5em;
+		}
+		.notice {
+			color: #777;
+			font-size: 0.7em;
+		}
+	</style>
+</head>
+
+<body>
+
+	<div id="output"></div>
+	<input id="input" type="text" placeholder="" />
+
+	<script src="script.js"></script>
+
+	<div class="notice">Note: This expects the server to run at localhost:8080</div>
+
+</body>
+
+</html>
+

@@ -279,7 +279,7 @@ class Codegen(val context: vm.Context) {
     val name = ns.namespaced(table.name.path.map(_.id).mkString("."))
     Try(new vm.Table(context, name, table.columns.map(_.id), constraints)) match {
       case Success(tab) =>
-        ns.set(table.name, NamedTable(tab))
+        ns.create(table.name, NamedTable(tab))
         context.queryables(tab.name) = tab
       case Failure(err) => error(table, s"Failed to create table '${table.name.prettyPrint}': ${err.getMessage}")
     }

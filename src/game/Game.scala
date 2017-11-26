@@ -11,6 +11,16 @@ class Game {
 
   val context = Initialization.compileGame()
 
+  // Tables defined in the code
+  val tabCmdKeyword = context.query[vm.Entity, String]("cmd.keyword") _
+  val tabCmdSelect = context.query[vm.Entity, vm.Rule]("cmd.select") _
+  val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
+  val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
+  val tabName = context.query[vm.Entity, String]("name") _
+  val tabKeyword = context.query[vm.Entity, String]("keyword") _
+  val tabGameTitle = context.query[String]("game.title") _
+  val tabGameWelcome = context.query[String]("game.welcome") _
+
   private def fmt(str: String): Vector[ui.TextSpan] = {
     val parts = str.split("\\*\\*")
     var isBold = false
@@ -29,19 +39,13 @@ class Game {
       if (parts.isEmpty) return GameText(fmt("Expected a command"), true)
 
       parts(0) match {
-        case "hello" =>
-          val msg =
-            """
-              |Welcome to **Abenteuer** - text adventure.
-              |
-              |At any point type **help** to get a list of available commands.
-              |
-              |(Or /help for developer commands)
-              |
-              |""".stripMargin
+        case "title" =>
+          val msg = tabGameTitle(None).toStream.headOption.getOrElse("(no title defined)")
           GameText(fmt(msg))
 
-        case "title" => GameText(fmt("Abenteuer"))
+        case "hello" =>
+          val msg = tabGameWelcome(None).toStream.headOption.getOrElse("(no hello message defined)")
+          GameText(fmt(msg))
 
         case "help" =>
           val msg = """Note: This is the debug command help, for in-game help use only:
@@ -72,13 +76,6 @@ class Game {
 
   val tokenRegex = raw"""[a-z]+""".r
 
-  // Tables defined in the code
-  val tabCmdKeyword = context.query[vm.Entity, String]("cmd.keyword") _
-  val tabCmdSelect = context.query[vm.Entity, vm.Rule]("cmd.select") _
-  val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
-  val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
-  val tabName = context.query[vm.Entity, String]("name") _
-  val tabKeyword = context.query[vm.Entity, String]("keyword") _
 
   var commandUnderSelect: Option[DelayedCommand] = None
 
