@@ -9,17 +9,17 @@ case class DelayedCommand(command: vm.Entity, options: Vector[vm.Entity], previo
 
 class Game {
 
-  val context = Initialization.compileGame()
+  private val context = Initialization.compileGame()
 
   // Tables defined in the code
-  val tabCmdKeyword = context.query[vm.Entity, String]("cmd.keyword") _
-  val tabCmdSelect = context.query[vm.Entity, vm.Rule]("cmd.select") _
-  val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
-  val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
-  val tabName = context.query[vm.Entity, String]("name") _
-  val tabKeyword = context.query[vm.Entity, String]("keyword") _
-  val tabGameTitle = context.query[String]("game.title") _
-  val tabGameWelcome = context.query[String]("game.welcome") _
+  private val tabCmdKeyword = context.query[vm.Entity, String]("cmd.keyword") _
+  private val tabCmdSelect = context.query[vm.Entity, vm.Rule]("cmd.select") _
+  private val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
+  private val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
+  private val tabName = context.query[vm.Entity, String]("name") _
+  private val tabKeyword = context.query[vm.Entity, String]("keyword") _
+  private val tabGameTitle = context.query[String]("game.title") _
+  private val tabGameWelcome = context.query[String]("game.welcome") _
 
   private def fmt(str: String): Vector[ui.TextSpan] = {
     val parts = str.split("\\*\\*")
@@ -32,6 +32,17 @@ class Game {
     spans.toVector
   }
 
+  /**
+    * This is the only public API of the game engine!
+    *
+    * Passes some input to the game and returns the response from the game.
+    *
+    * All specialized API functions are done using '/commands', for example to
+    * retrieve the title of the game use '/title'.
+    *
+    * @param input Input for the game or engine using '/commands'
+    * @return Text to print to the user.
+    */
   def interact(input: String): GameText = {
 
     if (input.startsWith("/")) {
@@ -74,12 +85,10 @@ class Game {
     }
   }
 
-  val tokenRegex = raw"""[a-z]+""".r
+  private val tokenRegex = raw"""[a-z]+""".r
+  private var commandUnderSelect: Option[DelayedCommand] = None
 
-
-  var commandUnderSelect: Option[DelayedCommand] = None
-
-  def runCommand(command: String): GameText = {
+  private def runCommand(command: String): GameText = {
     val lower = command.toLowerCase
     val parts = tokenRegex.findAllIn(lower).toVector
     val line = parts.mkString(" ")
@@ -166,7 +175,7 @@ class Game {
     }
   }
 
-  def executeCommandRule(command: vm.Entity, entity: Option[vm.Entity]): GameText = {
+  private def executeCommandRule(command: vm.Entity, entity: Option[vm.Entity]): GameText = {
     LangActions.hasFailed = false
     val tryRules = tabCmdDo(Some(command), None, None).toVector.sortBy(row => row._3).map(_._2)
     val text = LangActions.listenToPrint {

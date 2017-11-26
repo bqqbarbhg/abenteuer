@@ -9,7 +9,8 @@ object ScannerTest extends App {
   val source =
     """
        | print "Hello\nworld!"
-       | test
+       | ! test 123
+       | () { } -> { }
     """.stripMargin
   val scanner = new Scanner(source, "inline")
   printTokens(scanner)

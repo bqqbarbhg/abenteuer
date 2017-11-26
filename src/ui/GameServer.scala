@@ -7,13 +7,17 @@ import util.EscapeUtil.EscapedString
 
 import scala.util.Try
 
+/**
+  * Simple (very bad) HTML server implementation for the game.
+  * There is a client in the repo at: *ab-html/index.html*
+  */
 object GameServer extends App {
 
   val theGame = new game.Game()
 
   val contentLengthRegex = raw"""\s*content-length:\s*(\d+)\s*""".r
 
-  val port = args.lift(1).flatMap(arg => Try(arg.toInt).toOption).getOrElse(8081)
+  val port = args.lift(1).flatMap(arg => Try(arg.toInt).toOption).getOrElse(8080)
   val socket = new ServerSocket(port)
   println(s"Serving at port $port")
 

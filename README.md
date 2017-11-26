@@ -15,7 +15,7 @@ project, so it should be openable in either IDE. The only dependency the program
 configured to the build already but you can add it manually to the build if it doesn't work for some
 reason.
 
-When building use either `GameGui` or `GameStdio` as the main class. I recommend the GUI though since,
+When building use either `GameGui`, `GameStdio` or `GameServer` as the main class. I recommend the GUI though since,
 it's a lot more responsive, supports text styles and ephemeral messages from the game (more on it below).
 The game needs to have the *script/* folder in it's working directory (Note: the game attempts to search
 it from parent folders so it should work with both Eclipse and IDEA default working directories)
@@ -23,7 +23,29 @@ it from parent folders so it should work with both Eclipse and IDEA default work
 Code structure
 --------------
 
-The code is organized into packages, roughly in dependency order: *db*, *vm*, *lang*, *game*, *ui*, *test*.
+The code is organized into packages, roughly in dependency order: *util*, *db*, *vm*, *lang*, *game*, *ui*, *test*.
+
+### *util* - Utilities
+
+A mixed bag of useful things, mostly special-cased iterators and string manipulation. The most useful feature of
+this package is `SimpleIterator[T]` which wraps Scala's `Iterator[T]` interface merging the two calls:
+
+```scala
+// Scala iterator, you need to spread the iterator functionality into two
+// methods, which in many cases is inconvenient.
+class Iterator[T] {
+	def hasNext: Boolean
+	def next(): T
+}
+
+// Return `Some(value)` if there are still things left to iterate, `None`
+// otherwise, simple as that! Also, after returning `None` once the method
+// is _guaranteed_ to never be called again! (it will throw as this is illegal,
+// analogous to calling `next()` when `hasNext = false`)
+class SimpleIterator[T] {
+	def nextOption(): Option[T]
+}
+```
 
 ### *db* - Database
 
@@ -183,11 +205,83 @@ ex-value  = "*" ex-name ;
 ### *game* - Game Engine
 
 Since most of the work is done by the virtual machine and database
-engines.
+engines, most that this package has to do is to gather all the source
+files to compile and run the high-level game engine logic, such as
+what rules to query and how to execute their results. Since there is
+only one API method, we can trivially turn this into an RPC system by
+serializing the input and output somehow. An example of this is
+`GameServer` which exposes the game as a simple HTML server.
 
 ### *ui* - User Interface
 
+The actual user-visible portion of the project. Contains three
+alternative frontends for the game: one text-based, one GUI and one
+remote.
+
+#### *GameStdio*
+
+Probably the simplest frontend you could implement for the game.
+Doesn't support any fancy features like ephemeral messages or formatting.
+
+Actually it's so short I may as well inline the whole implementation here:
+```scala
+package ui
+
+object GameStdio extends App {
+  val theGame = new game.Game()
+
+  def appendSpans(spans: Seq[TextSpan]) = spans.foreach(span => print(span.text))
+
+  val hello = theGame.interact("/hello")
+  appendSpans(hello.spans)
+
+  while (true) {
+    Console.print("\n> ")
+    Console.flush()
+    val line = scala.io.StdIn.readLine()
+
+    val result = theGame.interact(line)
+    // In case the game wants to override the user prmpt, print it!
+    // Sadly, we can't replace already printed lines of the standard output.
+    result.overridePrompt.foreach(prompt => println(s"> $prompt"))
+    appendSpans(result.spans)
+  }
+}
+```
+
+#### *GameGui*
+
+A Java Swing based GUI frontend which supports all the fancy features.
+This is the only thing that depends on the Swing *.jar* so if there is no way
+to get it working you should be able to just remove `GameGui.scala` from the
+build and carry on.
+
+![Screenshot of GameGui]("gui-screenshot.png")
+
+#### *GameServer*
+
+Half of the remote client. The other half is located at *ab-html/index.html*.
+It should work with any modern browser that supports `fetch` (Chrome tested).
+The code is at most a proof-of-concept and since there was no real HTTP server
+in the standard library it's kind of a mess. The Javascript side also didn't
+receive much love and probably bugs out if stressed too much. But as a concept
+it works pretty well.
+
+This idea could be improved further, and by extending the game API with some
+kind of per-user token it should be pretty easy to make a multiplayer text
+adventure with this system, where each player controls a different character.
+
 ### *test* - Test
+
+This package contains a collection of test files (not unit tests!) that were
+used during the development of the features.
+
+In chornological order:
+* **TableTest** - Put some stuff in `db.Table` and query it
+* **QueryTest** - Create a `vm.Rule` to show items in an inventory
+* **ScannerTest** - Tokenize a small source file
+* **ParserTest** - Parse a small source file and dump the AST
+* **CodegenTest** - Actually compile two source files and execute one rule!
 
 [wiki-ebnf]: https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
 
