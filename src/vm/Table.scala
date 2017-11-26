@@ -23,7 +23,18 @@ class Table(val context: Context, val name: String, val columns: Vector[String],
   }
   val defaultValues = defaultColumns.map(_.value)
 
-  val table = new db.Table(columns.length)
+  def createTable(): db.Table = {
+    val unorderedGroups = constraints.collect { case u: Unordered => u }.map(u => Array(columns.indexOf(u.col0), columns.indexOf(u.col1))).toArray
+    if (unorderedGroups.size > 1) {
+      new db.UnorderedTable(columns.length, unorderedGroups)
+    } else if (unorderedGroups.size == 1) {
+      new db.UnorderedTableSimple(columns.length, unorderedGroups(0)(0), unorderedGroups(0)(1))
+    } else {
+      new db.Table(columns.length)
+    }
+  }
+
+  val table: db.Table = createTable
   def arity: Int = table.arity
 
   def maxColumns: Int = columns.length

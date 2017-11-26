@@ -1,9 +1,0 @@
-
-table room self room
-table link a b { unordered a b }
-
-define near (A B) {
-	room A Room
-	room B Room
-}
-

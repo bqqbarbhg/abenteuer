@@ -4,12 +4,15 @@ entity inventory {
 	cmd.abbrev "inv" "inventory"
 	cmd.help "**inventory**: List items you're carrying"
 
+	cmd.do () -> {
+		print: "You are currently carrying:"
+	}
+
 	cmd.do () {
 		has *Player Thing
-		name Thing Name
-		description Thing Desc
 	} -> {
-		print: "**{Name}**: {Desc}"
-	}
+		print: "**{name:Thing}**: {desc:Thing}"
+	} 10
 }
+
 

@@ -1,0 +1,28 @@
+
+entity command.open {
+	cmd.keyword "open"
+	cmd.help "**open**: Open something"
+
+	cmd.select (Door) {
+		room *Player Room
+		room Door Room
+		can-open Door
+		! open Door
+	}
+
+	cmd.do (Door) -> {
+		open Door
+	}
+
+	cmd.do (Door) -> {
+		print: "You open {name:Door}"
+	} 20
+
+	cmd.do (Door) {
+		room *Player Room
+		link Room Link Door
+	} -> {
+		print: "It reveals a path to **{name:Link}**"
+	} 30
+}
+

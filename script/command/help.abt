@@ -1,0 +1,18 @@
+entity help {
+	cmd.keyword "help"
+
+	cmd.help "**help**: Help for using the interface"
+
+	cmd.do () {
+		cmd.help Command Help
+	} -> {
+		print: Help
+	}
+	cmd.do() -> {
+		print: ""
+		print: "Hint: You can omit the target of the command to get a listing,
+for example try to type:"
+		print: "**> inspect**"
+	} 10
+}
+

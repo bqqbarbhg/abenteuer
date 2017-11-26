@@ -1,7 +1,0 @@
-
-# Name of an entity
-table name self name { unique self }
-
-# Short description of an entity
-table description self desc { unique self }
-

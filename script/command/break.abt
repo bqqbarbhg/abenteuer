@@ -1,0 +1,28 @@
+
+entity command.break {
+	cmd.keyword "break"
+	cmd.help "**break**: Break something"
+
+	cmd.select (Thing) {
+		room *Player Room
+		room Thing Room
+		breakable Thing Force
+		has *Player Item
+		break-tool Item Force
+		! open Thing
+	}
+
+	cmd.do (Thing) {
+		breakable Thing Force
+		has *Player Item
+		break-tool Item Force
+		! open Thing
+	} -> {
+		open Thing
+		print: "You break **{name:Thing}** with **{name:Item}**"
+		fail:
+	}
+
+}
+
+

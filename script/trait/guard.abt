@@ -1,0 +1,13 @@
+
+# Someone guards the area
+table guard self area message {
+	default message "I can't let you go there"
+}
+
+cmd.do command.go (Link) {
+	guard Guard Link Message
+} -> {
+	print: "**{name:Guard}**: {Message}"
+	fail:
+} -10
+

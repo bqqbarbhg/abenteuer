@@ -1,15 +1,17 @@
 package game
 
+import ui.TextSpan
+
 import scala.collection.mutable.ArrayBuffer
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 
-case class GameText(spans: Vector[ui.TextSpan], ephemeral: Boolean = false, overridePrompt: Option[String] = None)
+case class GameText(spans: Vector[TextSpan], ephemeral: Boolean = false, overridePrompt: Option[String] = None)
 
-case class DelayedCommand(command: vm.Entity, options: Vector[vm.Entity], previousLine: String)
+case class DelayedCommand(command: vm.Entity, options: Vector[vm.Entity], previousLine: String, hadKeyword: Boolean)
 
-class Game {
+class GameInstance {
 
-  private val context = Initialization.compileGame()
+  private val (context, actions) = Initialization.compileGame()
 
   // Tables defined in the code
   private val tabCmdKeyword = context.query[vm.Entity, String]("cmd.keyword") _
@@ -21,12 +23,12 @@ class Game {
   private val tabGameTitle = context.query[String]("game.title") _
   private val tabGameWelcome = context.query[String]("game.welcome") _
 
-  private def fmt(str: String): Vector[ui.TextSpan] = {
+  private def fmt(str: String): Vector[TextSpan] = {
     val parts = str.split("\\*\\*")
     var isBold = false
-    val spans = new ArrayBuffer[ui.TextSpan](parts.length)
+    val spans = new ArrayBuffer[TextSpan](parts.length)
     for (part <- parts) {
-      spans += ui.TextSpan(part, if (isBold) ui.TextStyle.Bold else ui.TextStyle.Normal)
+      spans += TextSpan(part, if (isBold) ui.TextStyle.Bold else ui.TextStyle.Normal)
       isBold = !isBold
     }
     spans.toVector
@@ -65,6 +67,8 @@ class Game {
             |  **/hello** - Display startup message
             |  **/help** - Show this help
             |  **/title** - Get window title
+            |  **/reload** - Reload the game
+            |  **/replay** - Reload the game and replay all the input
             |  **/list** - Dump table contents
             |
             |""".stripMargin
@@ -111,7 +115,14 @@ class Game {
         }
 
         val result = executeCommandRule(command.command, Some(selected))
-        return GameText(result.spans, result.ephemeral, Some(command.previousLine + " " + number))
+
+        val keyword = if (!command.hadKeyword) {
+          tabKeyword(Some(selected), None).toStream.headOption.map(row => row._2 + " ").getOrElse("")
+        } else {
+          ""
+        }
+
+        return GameText(result.spans, result.ephemeral, Some(s"${command.previousLine} $keyword ($number)"))
       case None =>
         commandUnderSelect = None
     }
@@ -148,7 +159,7 @@ class Game {
         executeCommandRule(cmd, Some(filteredOptions.head))
       } else {
         // Multiple or unselected options, show choices
-        commandUnderSelect = Some(DelayedCommand(cmd, filteredOptions, line))
+        commandUnderSelect = Some(DelayedCommand(cmd, filteredOptions, line, restOfLine.nonEmpty))
 
         val names = for ((option, index) <- filteredOptions.zipWithIndex) yield {
           val name = tabName(Some(option), None).toStream.headOption.map(_._2).getOrElse("(unknown)")
@@ -167,21 +178,61 @@ class Game {
   }
 
   private def executeRuleChain(rules: Vector[vm.Rule], entity: Option[vm.Entity]): Unit = {
-    for (rule <- rules) {
-      for (pattern <- rule.query(entity.map(Some(_)).toArray).toVector) {
-        rule.execute(pattern)
-        if (LangActions.hasFailed) return
-      }
+    val pattern = entity.map(Some(_)).toArray[Option[Any]]
+    val matches = rules.map(rule => (rule, rule.query(pattern).toVector)).toVector
+    for {
+      (rule, patterns) <- matches
+      pattern <- patterns
+    } {
+      rule.execute(pattern)
+      if (actions.hasFailed) return
     }
   }
 
   private def executeCommandRule(command: vm.Entity, entity: Option[vm.Entity]): GameText = {
-    LangActions.hasFailed = false
+    actions.hasFailed = false
     val tryRules = tabCmdDo(Some(command), None, None).toVector.sortBy(row => row._3).map(_._2)
-    val text = LangActions.listenToPrint {
+    val text = actions.listenToPrint {
       executeRuleChain(tryRules, entity)
     }
     GameText(fmt(text.mkString("\n")))
   }
 
+}
+
+class Game {
+  var instance = new GameInstance()
+  val inputs = new ArrayBuffer[String]()
+
+  private def errorToText(err: lang.CompileError): GameText = {
+    GameText(Vector(TextSpan("Failed to compile game\n", ui.TextStyle.Bold),
+      TextSpan(err.getMessage, ui.TextStyle.Normal)), true)
+  }
+
+  def interact(input: String): GameText = {
+    input.trim match {
+      case "/reload" =>
+        try {
+          instance = new GameInstance()
+          inputs.clear()
+          instance.interact("/hello")
+        } catch {
+          case err: lang.CompileError => errorToText(err)
+        }
+      case "/replay" =>
+        try {
+          instance = new GameInstance()
+          val allInputs = Vector("/hello") ++ inputs
+          for (input <- allInputs.dropRight(1)) {
+            instance.interact(input)
+          }
+          instance.interact(allInputs.last)
+        } catch {
+          case err: lang.CompileError => errorToText(err)
+        }
+      case _ =>
+        inputs += input
+        instance.interact(input)
+    }
+  }
 }

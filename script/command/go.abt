@@ -1,5 +1,5 @@
 
-entity go {
+entity command.go {
 	cmd.keyword "go", "move"
 	cmd.abbrev "g" "go"
 	cmd.abbrev "cd" "go"
@@ -8,18 +8,29 @@ entity go {
 
 	cmd.select (Link) {
 		room *Player Room
-		link Room Link
+		link Room Link *AlwaysOpen
+	}
+
+	cmd.select (Link) {
+		room *Player Room
+		link Room Link Door
+		room Door Room
+		open Door
 	}
 
 	cmd.do (Link) {
 		room *Player Room
-		name Link Name
-		description Link Desc
 	} -> {
 		room *Player Link
 		! room *Player Room
-		print: "Walked to {Name} - {Desc}"
 	}
 
+	cmd.do (Link) {
+		room *Player Room
+	} -> {
+		print: "Walked to **{name:Link}**"
+	} 20
+
 }
+
 

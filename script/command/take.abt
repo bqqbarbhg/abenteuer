@@ -12,36 +12,12 @@ entity take {
 	}
 
 	cmd.do (Thing) {
-		name Thing Name
 		room Thing Room
 	} -> {
 		has *Player Thing
 		! room Thing Room
-		print: "Picked up **{Name}**"
+		print: "Picked up **{name:Thing}**"
 	}
 }
 
-entity drop {
-	cmd.keyword "drop", "leave"
-	cmd.help "**drop**: Drop an object you're holding"
-
-	cmd.select (Thing) {
-		has *Player Thing
-	}
-
-	cmd.do (Thing) {
-		name Thing Name
-		room *Player Room
-	} -> {
-		! has *Player Thing
-		room Thing Room
-		print: "Dropped **{Name}**"
-	}
-}
-
-# An object that can be picked up
-table item self
-
-# Who is holding what
-table has self item
 

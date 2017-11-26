@@ -1,0 +1,19 @@
+
+table game.title title
+table game.welcome welcome
+
+game.title "Otnaniemi 2167"
+
+game.welcome "Welcome to **Otaniemi 2167**.
+Built using **Abenteuer**
+
+After a night of semi-heavy drinking you wake up at an unfamiliar place.
+
+At any point type **help** to get a list of available commands.
+(Or /help for developer commands)
+
+To examine your surroundings input:
+> look
+"
+
+

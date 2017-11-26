@@ -1,0 +1,30 @@
+
+# Arbitrary flavor text for objects
+table flavor self text
+
+# Binds entities to "rooms"
+table room self room
+
+# For doors and other lockable things
+table open self
+
+# Something that can be opened
+table can-open self
+
+# Placeholder any room
+entity AnyRoom
+
+# Text to print when looked at
+table look self text room {
+	default room AnyRoom
+}
+
+# Default door between all links
+entity AlwaysOpen { open }
+
+# Links between rooms
+table link a b door {
+	unordered a b
+	default door AlwaysOpen
+}
+

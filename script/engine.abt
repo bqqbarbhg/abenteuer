@@ -38,22 +38,14 @@ table keyword self kw
 # A physical object that resides in the world
 table object self
 
-# Help command
-entity help {
-	cmd.keyword "help"
+# Name
+table name self name { unique self }
 
-	cmd.help "**help**: Help for using the interface"
+# Short description
+table desc self desc { unique self }
 
-	cmd.do () {
-		cmd.help Command Help
-	} -> {
-		print: Help
-	}
-	cmd.do() -> {
-		print: ""
-		print: "Hint: You can omit the target of the command to get a listing,
-for example try to type:"
-		print: "**> inspect**"
-	} 10
-}
+# Missing values (for interpolation)
+table string-missing tab str { unique tab }
+string-missing "name" "(no name)"
+string-missing "desc" ""
 

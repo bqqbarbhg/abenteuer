@@ -1,0 +1,19 @@
+
+entity drop {
+	cmd.keyword "drop", "leave"
+	cmd.help "**drop**: Drop an object you're holding"
+
+	cmd.select (Thing) {
+		has *Player Thing
+	}
+
+	cmd.do (Thing) {
+		room *Player Room
+	} -> {
+		! has *Player Thing
+		room Thing Room
+		print: "Dropped **{name:Thing}** to **{name:Room}**"
+	}
+}
+
+

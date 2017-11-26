@@ -55,7 +55,7 @@ class Namespace(val parent: Option[Namespace], val name: String) {
     if (index + 1 == name.path.size) {
       val nameStr = name.path(index).id
       names.get(nameStr) match {
-        case Some(prev) => throw new RuntimeException(s"${name.loc}: '$nameStr' is already defined as a ${prev.what} at '${prev.loc}'")
+        case Some(prev) => throw new CompileError(name.representingToken.location, s"'$nameStr' is already defined as a ${prev.what} at '${prev.loc}'")
         case None => names(nameStr) = value
       }
     } else {
@@ -68,7 +68,7 @@ class Namespace(val parent: Option[Namespace], val name: String) {
           val nn = NamedNamespace(child)
           nn.representingToken = name.path(index)
           names(ns) = nn
-        case Some(other) => throw new RuntimeException(s"${name.loc}: Could not create namespace '$ns', already defined as a ${other.what} at ${other.loc}.")
+        case Some(other) => throw new CompileError(name.representingToken.location, s"Could not create namespace '$ns', already defined as a ${other.what} at ${other.loc}.")
       }
     }
   }
@@ -79,14 +79,14 @@ class Namespace(val parent: Option[Namespace], val name: String) {
     if (index + 1 == name.path.size) {
       val nameStr = name.path(index).id
       names.get(nameStr) match {
-        case Some(prev) => throw new RuntimeException(s"${name.loc}: '$nameStr' is already defined as a ${prev.what} at '${prev.loc}'")
+        case Some(prev) => throw new CompileError(name.representingToken.location, s"'$nameStr' is already defined as a ${prev.what} at '${prev.loc}'")
         case None => names(nameStr) = value
       }
     } else {
       val ns = name.path(index).id
       names.get(ns) match {
         case Some(NamedNamespace(child)) => child.set(name, value, index + 1)
-        case _ => throw new RuntimeException(s"${name.loc}: Namespace '$ns' not found!")
+        case _ => throw new CompileError(name.representingToken.location, s"${name.loc}: Namespace '$ns' not found!")
       }
     }
   }

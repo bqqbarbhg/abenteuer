@@ -1,5 +1,5 @@
 
-entity look {
+entity command.look {
 	cmd.keyword "look"
 	cmd.help "**look**: Look around your surroundings"
 	cmd.abbrev "l" "look"
@@ -7,11 +7,25 @@ entity look {
 
 	cmd.do () {
 		room *Player Room
-		name Room Name
-		description Room Description
 	} -> {
-		print: "{Name} - {Description}"
+		print: "**{name:Room}**: {desc:Room}"
 	} 0
+
+	cmd.do () {
+		room *Player Room
+		room Thing Room
+		look Thing Text Room
+	} -> {
+		print: Text
+	} 3
+
+	cmd.do () {
+		room *Player Room
+		room Thing Room
+		look Thing Text *AnyRoom
+	} -> {
+		print: Text
+	} 3
 
 	cmd.do () {
 		room *Player Room
@@ -19,40 +33,5 @@ entity look {
 	} -> {
 		print: Flavor
 	} 5
-
-	cmd.do () -> { print: "" } 9
-
-	cmd.do () {
-		room *Player Room
-		room Item Room
-		item Item
-		name Item Name
-		description Item Description
-	} -> {
-		print: "**{Name}**: {Description}"
-	} 10
-
-	cmd.do () {
-		room *Player Room
-		room Item Room
-		lookable Item
-		name Item Name
-		description Item Description
-	} -> {
-		print: "**{Name}**: {Description}"
-	} 15
-
-	cmd.do () -> { print: "" } 19
-	cmd.do () {
-		room *Player Room
-		link Room Link
-		name Link Name
-		description Link Description
-	} -> {
-		print: "**{Name}**: {Description}"
-	} 20
 }
-
-table lookable self
-table flavor self text
 

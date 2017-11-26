@@ -1,0 +1,13 @@
+
+force {
+	entity low
+	entity medium
+	entity high
+}
+
+# Something that can be broken
+table breakable self strength
+
+# Something that can break things
+table break-tool self strength
+

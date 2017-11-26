@@ -1,0 +1,10 @@
+
+# Student serial number
+table student-id self number { unique self }
+
+cmd.do command.inspect (Student) {
+	student-id Student Id
+} -> {
+	print: "Student id. {Id}"
+} 1
+

@@ -1,0 +1,10 @@
+
+table fail-open self
+
+cmd.do command.open (Door) {
+	fail-open Door
+} -> {
+	print: "It won't budge."
+	fail:
+} -10
+

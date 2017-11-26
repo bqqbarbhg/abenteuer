@@ -1,20 +1,32 @@
 
-entity inspect {
+entity command.inspect {
 	cmd.keyword "inspect", "stare at"
 	cmd.abbrev "i" "inspect"
 	cmd.help "**inspect**: Inspect finer details of objects"
 
 	cmd.select (Thing) {
-		object Thing
+		room *Player R
+		room Thing R
 	}
 
-	cmd.do (Thing) {
-		name Thing Name
-		desc Thing Desc
-	} -> {
-		print: "**{Name}**"
-		print: Desc
+	cmd.do (Thing) -> {
+		print: "**{name:Thing}**: {desc:Thing}"
 	}
+
+	cmd.do (Door) {
+		link A B Door
+		! open Door
+	} -> {
+		print: "Looks like it could lead somewhere if opened"
+	} 1
+
+	cmd.do (Door) {
+		room *Player Room
+		link Room Link Door
+		open Door
+	} -> {
+		print: "Leads to **{name:Link}**"
+	} 1
 
 	cmd.do (Thing) {
 		flavor Thing Text
@@ -22,4 +34,5 @@ entity inspect {
 		print: Text
 	} 5
 }
+
 

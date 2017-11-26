@@ -30,7 +30,7 @@ object Initialization {
     })
   }
 
-  def compileGame(): vm.Context = {
+  def compileGame(): (vm.Context, LangActions) = {
 
     // -- Find the script root directory
     val scriptRoot: File = findDataFolder().getOrElse {
@@ -54,8 +54,10 @@ object Initialization {
 
     // -- Setup the builtins for the compiler
     val context = new vm.Context
-    context.externals("print") = vm.ExternalAction(LangActions.print)
-    context.externals("fail") = vm.ExternalAction(LangActions.fail)
+    val actions = new LangActions(context)
+
+    context.externals("print") = vm.ExternalAction(actions.print)
+    context.externals("fail") = vm.ExternalAction(actions.fail)
 
     // -- Compile the script sources
     try {
@@ -71,6 +73,6 @@ object Initialization {
         throw err
     }
 
-    context
+    (context, actions)
   }
 }

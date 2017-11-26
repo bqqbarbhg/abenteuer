@@ -1,0 +1,7 @@
+
+# Inventory management
+table has self item { unique self }
+
+# Items
+table item self
+

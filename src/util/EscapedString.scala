@@ -5,7 +5,7 @@ import scala.collection.immutable.HashMap
 object EscapeUtil {
   val controlMap = Map('\b' -> "\\b", '\t' -> "\\t", '\n' -> "\\n", '\f' -> "\\f", '\r' -> "\\r")
   val escapeMap = controlMap ++ Map('\\' -> "\\\\", '"' -> "\\\"")
-  val unescapeMap = escapeMap.map({ case (k, v) => v(1) -> k.toString() })
+  val unescapeMap = escapeMap.map({ case (k, v) => v(1) -> k.toString() }).updated('\\', "\\\\")
   val unescapeRegex = raw"""\\(.)""".r
 
   def escapeCharControl(c: Char): String = {

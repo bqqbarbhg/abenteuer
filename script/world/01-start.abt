@@ -1,0 +1,137 @@
+# The first area of the game
+
+Start {
+
+Apartment {
+
+	entity R {
+		keyword "apartment"
+		name "some apartment"
+		desc "Unfamiliar communal apartment"
+
+		flavor "This is not where you live."
+	}
+
+	table jumpable-window self
+
+	entity Window {
+		can-open; fail-open; jumpable-window
+		keyword "window"
+		room R
+		name "window"
+		look "Harsh morning light shines through the **window**"
+		desc "A window mounted on the wall opposite from the exit"
+		flavor "A heavy dust-storm ravages the once-green campus area."
+		breakable force.low
+	}
+
+	entity Door {
+		can-open
+		keyword "door", "exit"
+		name "door"
+		look "Behind you is a **door** which leads to the hallway" R
+		look "On the wall the **door** you emerged from" Hallway.R
+		desc "A sturdy door that provides at least some amount of privacy here"
+		room R, Hallway.R
+	}
+
+	cmd.do command.go (Link) {
+		room *Player R
+		link R Link Door
+		jumpable-window Door
+	} -> {
+		print: "You jump through **{name:Door}** to **{name:Link}**"
+		fail:
+	} 10
+
+}
+
+Hallway {
+
+	entity R {
+		keyword "hallway", "corridor", "upstairs"
+		name "hallway"
+		desc "Hallway of the apartment complex"
+
+		flavor "Closed doors line the walls. Sickly green light shines from the ceiling."
+		flavor "There is a stairwell that leads **downstairs**."
+	}
+
+	entity Guard {
+		keyword "guard", "man", "person", "student"
+		name "guard"
+		desc "Intimidating person in riot gear"
+		student-id "3987359-D"
+
+		look "A **guard** stands guarding the stairs between the floors"
+
+		room R
+		guard Ground-Floor.R "The ground floor is off-limits while the **curfew** is active"
+
+		flavor "He stands purposefully blocking the hallway."
+	}
+
+	Guard-Talk {
+
+		entity curfew {
+			keyword "curfew"
+			name "Curfew?"
+			line Guard "Nobody is allowed outside until the dust storm has passed"
+		}
+
+		entity who {
+			keyword "who"
+			name "Who are you?"
+			line Guard "That's none of your business"
+		}
+
+		entity pass {
+			keyword "pass", "let", "go", "leave", "step"
+			name "Let me pass!"
+			line Guard "Nope."
+		}
+		
+	}
+
+	entity Door-Handle {
+		keyword "handle"
+		name "door handle"
+		desc "A not-so-well attached door handle"
+		look "There is a loose door **handle**"
+		item
+		break-tool force.low
+		room R
+	}
+
+}
+
+Ground-Floor {
+
+	entity R {
+		keyword "downstairs", "ground", "floor"
+		name "ground floor"
+		desc "The bottom floor of the apartment building"
+	}
+
+}
+
+Yard {
+
+	entity R {
+		keyword "yard", "outside"
+		name "yard"
+		desc "The great outdoors"
+		flavor "You try to orient yourself in the dust-storm"
+	}
+
+}
+
+link Apartment.R Yard.R Apartment.Window
+link Apartment.R Hallway.R Apartment.Door
+link Hallway.R Ground-Floor.R
+
+# Starting room for the player
+room Player Apartment.R
+
+}
+
