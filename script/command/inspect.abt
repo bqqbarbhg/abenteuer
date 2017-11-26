@@ -2,7 +2,6 @@
 entity inspect {
 	cmd.keyword "inspect", "stare at"
 	cmd.abbrev "i" "inspect"
-
 	cmd.help "**inspect**: Inspect finer details of objects"
 
 	cmd.select (Thing) {
@@ -11,7 +10,7 @@ entity inspect {
 
 	cmd.do (Thing) {
 		name Thing Name
-		description Thing Desc
+		desc Thing Desc
 	} -> {
 		print: "**{Name}**"
 		print: Desc

@@ -18,6 +18,7 @@ object ParserTest extends App {
       |   cmd.command
       |   cmd.keyword "get", "take", "pick up"
       |   cmd.arg 0 "item"
+      |   cmd.do (foo)
       | }
       |
       | cmd.try cmd-get (Item) {

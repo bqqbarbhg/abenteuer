@@ -38,9 +38,6 @@ table keyword self kw
 # A physical object that resides in the world
 table object self
 
-# Defines a way to differentiate objects
-table differentiate func
-
 # Help command
 entity help {
 	cmd.keyword "help"
@@ -52,5 +49,11 @@ entity help {
 	} -> {
 		print: Help
 	}
+	cmd.do() -> {
+		print: ""
+		print: "Hint: You can omit the target of the command to get a listing,
+for example try to type:"
+		print: "**> inspect**"
+	} 10
 }
 

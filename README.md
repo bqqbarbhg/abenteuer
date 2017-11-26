@@ -216,7 +216,7 @@ serializing the input and output somehow. An example of this is
 
 The actual user-visible portion of the project. Contains three
 alternative frontends for the game: one text-based, one GUI and one
-remote.
+remote. Detailed descriptions of the frontends:
 
 #### *GameStdio*
 
@@ -283,5 +283,369 @@ In chornological order:
 * **ParserTest** - Parse a small source file and dump the AST
 * **CodegenTest** - Actually compile two source files and execute one rule!
 
+Design goals
+------------
+
+I wanted to fix some of the things that annoyed me in text adventures.
+
+### Ephemeral messages
+
+Ephemeral messages are my solution to the log spam that occurs from trying
+out different things in a text adventure. For example something like:
+
+```
+> lift rokc
+I don't find anything to lift
+> lift rock
+I don't find anything to lift
+> lift stone
+You lift stone
+```
+
+In Abenteuer, when a command fails the output is marked as **ephemeral**.
+This in itself doesn't do anything else but to inform the frontend that
+the result of the command isn't all that interesting. Then if the frontend
+supports it (currently GUI and HTML) the printed message will be written
+over by the next command. This goes hand-in-hand with *target selection*.
+
+### Target selection
+
+There are times when it's not totally obvious what to write so the game
+does what you want. The original idea was to resolve ambiguous actions
+with a list:
+```
+> inspect barrel
+Select by typing 1-2
+1. Barrel
+2. Barrel (shiny)
+> 2
+A shiny barrel that gleams in the sunlight.
+```
+
+Then the idea expanded to allowing to omit the "argument" to the command
+completely like:
+```
+> inspect
+Select by typing 1-3
+1. Barrel
+2. Barrel (shiny)
+3. Key
+4. Spoon
+> 3
+A key that opens doors or something.
+```
+
+I think this makes playing the game a more enjoyable interactive experience
+since you spend more time solving the high-level puzzles rather than fighting
+with the parser.
+
+Language reference
+------------------
+
+The game itself (found under *script/*) is written in the custom scripting
+language implemented by *lang*. There is a shoddy [Vim][vim] syntax definition
+for the language in the root called *abenteuer.vim*.
+
+### Syntax basics
+
+The langauge is newline-terminated, but you can wrap a line with `\` and split
+it using `;`, for example the three snippets are equivalent:
+```
+first line
+second
+
+first \
+line
+second
+
+first line; second
+```
+
+Basic lexical elements:
+```
+asd my-thing # Identifier (may have dashes)
+123 -5       # Number
+"Hello!" ""  # String
+table entity # Keyword
+```
+
+### Tables
+
+Tables are the most fundamental thing of the langauge and engine. They are
+lightweight but powerful datastructures that can contain values and be queried.
+The columns of a table can be given constraints while defining the table.
+
+```
+# Declares a table called my-table with two columns
+table my-table col1 col2
+
+table name Self Name {
+	# Column Self values must be unique -> can only have one name
+	unique Self
+}
+```
+
+### Entities
+
+Entities are like unique objects that can be added to tables.
+They don't really have any properties of their own except a debug name.
+All other data must be specified using tables.
+
+```
+# Declares a new entity called barrel
+entity Barrel
+
+# Now, we can add properties by inserting them into tables,
+# the syntax is <table-name> <col1> <col2>...
+name Barrel "Awesome Barrel"
+desc Barrel "This is a barrel containing mysteries"
+age  Barrel 15
+
+# Since it's very common to have the entity be the first column in a table
+# there is a shorthand for it:
+entity Other-Barrel {
+	name "Boring Barrel"
+	desc "It looks empty"
+	age  22
+}
+```
+
+There is a syntactic sugar that allows writing repeated statements more
+palatable. You can do multiple statements using a comma between the arguments.
+
+```
+entity Player {
+	keyword "me", "self", "player"
+}
+# Is same as:
+entity Player {
+	keyword "me"
+	keyword "self"
+	keyword "me"
+}
+# Is same as:
+entity Player
+keyword "me"
+keyword "self"
+keyword "me"
+# Also could be:
+keyword Player "me", Player "self", Player "me"
+```
+
+### Namespaces
+
+All the names in the script are in the same namespace, but you can define your
+own namespaces.
+
+```
+# Declares an entity under the namespace example
+entity example.thing
+
+# You can also open a namespace block
+example {
+	# Declares `example.other`
+	entity other
+
+	# Declares `example.nested.other`
+	entity nested.other
+
+	# Tables can also be namespaced
+	table property self
+}
+```
+
+### Lambdas
+
+The above langauge features already allow for defining almost everything you need to.
+However there is no way to make *behavior* with it yet. This is where the most
+complicated feature of the language comes in: lambdas.
+
+The syntax looks like this:
+```
+(arg1 arg2) { query } -> { action }
+
+# If either the query or action part is empty it
+# can be omitted:
+	(arg) { query } -> { }
+	(arg) { query }
+
+	(arg) { } -> { action }
+	(arg) -> { action }
+```
+
+By default all query and action identifier create a new local variable to bind to.
+If you want to refer to an existing entity you must prefix the name with `*`.
+```
+table has self thing
+
+entity Player
+entity Goblin
+entity Club
+entity Sword
+
+has Goblin Club
+has Player Sword
+
+() {
+	# Matches all possible pairs of table `has`:
+	has Player Thing
+	# -> Player=Player Thing=Sword
+	# -> Player=Goblin Thing=Club
+}
+
+() {
+	# Matches only things `entity Player` has.
+	has *Player Thing
+	# -> Player=Player Thing=Sword
+}
+```
+
+The query and action syntax looks similar and may even be exactly the same but still
+mean different, but very similar, things.
+
+```
+() {
+	# Queries for items that player has
+	has *Player Thing
+	# Filters query to only non-shiny things
+	! shiny Thing
+}
+
+(Item) -> {
+	# Adds item to player's inventory
+	has *Player Item
+	# Removes `Thing` from the table `shiny`
+	! shiny Thing
+}
+```
+
+The action block also can do other things than update the tables. Most useful
+is calling into the engine code to do something. First, the command must be
+imported using the `external` keyword.
+
+```
+# Load the external function "game-print" to `print`
+external print "game-print"
+
+(Door) {
+	locked Door
+} -> {
+	print: "{Door} is locked!"
+}
+```
+
+The thing that empowers this language is that the lambdas are a first class value
+and can be stored in tables!
+
+For example defining a behavior for a command:
+```
+entity xyzzy {
+	cmd.keyword "xyzzy"
+
+	cmd.do () -> {
+		print: "Nothing happens..."
+	}
+}
+
+# Now there is a row in the table `cmd.do` containing
+(Entity(xyzzy), Lambda(-> print..))
+```
+
+Game engine
+-----------
+
+The language specification still isn't enough to make a game. The script
+needs to communicate with the engine somehow and, you guessed it, it's
+through tables! You can look at *script/engine.abt* for the basic definitions
+of the engine.
+
+Let's for example go through the implementation of the `inspect` command found at
+*script/command/inspect.abt*. All the command-related tables are in the namespace
+`cmd`.
+
+First we need to define an entity for the command that binds it together:
+```
+entity inspect {
+```
+
+Then let's define some properties, when the user types something the game will
+query these tables to find a matching command. We can also write a short help
+description here.
+```
+	cmd.keyword "inspect", "stare at"
+	cmd.abbrev "i" "inspect"
+	cmd.help "**inspect**: Inspect finer details of objects"
+```
+
+Now for the actual behavior of the command. This is split into two functions
+the engine will call. First it checks if there exists a `cmd.select` for the
+command. Select should query all the objects the command is currently applicable
+to. Then the player can select one either using the `keyword` table or choosing
+from a list. 
+
+```
+	cmd.select (Thing) {
+		# This will match every object that has the same `room` as the player
+		room *Player Room
+		room Thing Room
+		object Thing
+	}
+```
+
+Note that in select the argument is actually a **wildcard**, not an entity.
+This is kind of weird language in the sense that to return values from functions
+you actually give them arguments that are not defined and the function will
+define them using constraints.
+
+The actual command execution is defined in `cmd.do`. The querying is only possible
+in the query-block, so we find the name and description for the object there.
+```
+	# This is called with Thing actually bound to something!
+	cmd.do (Thing) {
+		name Thing Name # Find the matching name
+		desc Thing Desc # Find the matching desc
+	} -> {
+		# Print them!
+		print: "**{Name}**"
+		print: Desc
+	}
+```
+
+Note that if either of the columns would have multiple entries for the entity
+the name-description pair would be printed multiple times! Also if one of them
+doesn't exist we don't print anything! We can avoid this by splitting the command
+into two parts:
+```
+	cmd.do (Thing) { name Thing Name } -> { print: "**{Name}**" }
+	cmd.do (Thing) { desc Thing Desc } -> { print: Desc } 10
+```
+
+The number `10` after the second lambda is a value for an optional column of the
+`cmd.do` table which defines the sort order. The default value is `0`. Before
+executing commands the engine sorts the possible actions in increasing priority
+order.
+
+You can also break out of commands with the `fail:` action. This allows adding
+failure cases as high-priority actions. In the following example if you try
+to pick up something that is in the table `hot` it will print a message and
+not execute any further actions, since it has a lower priority than the default
+(-100 < 0) it will interrupt the actual action.
+
+```
+cmd.do take (Thing) -> {
+	has *Player Thing
+	print: "Picked up {Thing}"
+}
+
+# This can also be defined in another file or anywhere
+cmd.do take (Thing) {
+	hot Thing
+} -> {
+	print: "You burn your fingers on {Thing}"
+	fail:
+} -100
+```
+
+[vim]: http://vim.org
 [wiki-ebnf]: https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
 
