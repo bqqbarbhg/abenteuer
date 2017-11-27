@@ -1,0 +1,11 @@
+
+table contains-student-name self id name
+
+cmd.do command.cat (File) {
+	contains-student-name File Id Name
+	! student-name Id Name
+} -> {
+	print: ">>> Student identity discovered **{Id}** = **{Name}**"
+	student-name Id Name
+} 100
+

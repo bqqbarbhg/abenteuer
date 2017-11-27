@@ -1,6 +1,5 @@
 
 entity Player {
-	object
 	keyword "self", "me", "player"
 	name "you"
 	desc "Student at TIK in /\\/\\/-U"

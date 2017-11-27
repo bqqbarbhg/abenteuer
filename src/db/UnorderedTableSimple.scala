@@ -13,6 +13,24 @@ object UnorderedTableSimple {
     ac.compareTo(bc) < 0
   }
 
+  /** Normalizes a pattern, note: Both columns must be defined in the pattern! */
+  def normalizePattern(pattern: Pattern, colA: Int, colB: Int): Pattern = {
+    assert(pattern(colA).isDefined)
+    assert(pattern(colB).isDefined)
+
+    // Swap the two values if they're the wrong way
+    val va = pattern(colA).get
+    val vb = pattern(colB).get
+    if (lessThan(vb, va)) {
+      val copy = pattern.clone()
+      copy(colA) = Some(vb)
+      copy(colB) = Some(va)
+      copy
+    } else {
+      pattern
+    }
+  }
+
   def normalizeRow(row: Row, colA: Int, colB: Int): Row = {
     // Swap the two values if they're the wrong way
     val va = row(colA)
@@ -103,10 +121,7 @@ class UnorderedTableSimple(numColumns: Int, val colA: Int, val colB: Int) extend
       super.queryRows(pattern)
     } else if (pattern(colA).isDefined && pattern(colB).isDefined) {
       // Both unordered columns are defined, fix order and keep going
-      val newPat = pattern.clone()
-      newPat(colB) = pattern(colA)
-      newPat(colA) = pattern(colB)
-      super.queryRows(newPat)
+      super.queryRows(normalizePattern(pattern, colA, colB))
     } else {
       // Only one of the unordered columns are defined, need to do two queries
       // and combine the results

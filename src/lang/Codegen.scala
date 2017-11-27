@@ -270,6 +270,11 @@ class Codegen(val context: vm.Context) {
             new TableConstraint.Default(tok.id, value)
           case _ => error(query, "Expected a column name and a value for 'default'")
         }
+      case "shared" =>
+        query.values match {
+          case Vector() => TableConstraint.Shared
+          case _ => error(query, "No arguments expected for 'shared'")
+        }
       case other => error(query, s"Unknown table constraint '$other'")
     }
   }
@@ -277,12 +282,25 @@ class Codegen(val context: vm.Context) {
   private def doTable(table: AstTable, ns: Namespace): Unit = {
     val constraints = table.constraints.statements.map(a => doConstraint(a, ns))
     val name = ns.namespaced(table.name.path.map(_.id).mkString("."))
-    Try(new vm.Table(context, name, table.columns.map(_.id), constraints)) match {
-      case Success(tab) =>
-        ns.create(table.name, NamedTable(tab))
-        context.queryables(tab.name) = tab
-      case Failure(err) => error(table, s"Failed to create table '${table.name.prettyPrint}': ${err.getMessage}")
+
+    val isShared = constraints.collect { case TableConstraint.Shared => }.nonEmpty
+    val maybeShared = if (isShared) {
+      context.findSharedTable(name)
+    } else {
+      None
     }
+
+    val tab = maybeShared.getOrElse(Try(new vm.Table(context, name, table.columns.map(_.id), constraints)) match {
+      case Success(tab) => tab
+      case Failure(err) => error(table, s"Failed to create table '${table.name.prettyPrint}': ${err.getMessage}")
+    })
+
+    if (isShared && maybeShared.isEmpty) {
+      context.defineSharedTable(tab)
+    }
+
+    ns.create(table.name, NamedTable(tab))
+    context.queryables(tab.name) = tab
   }
 
   private def doStatements(self: Option[vm.Entity], stmts: Vector[AstStmt], ns: Namespace): Unit = {

@@ -21,7 +21,7 @@ Apartment {
 		name "window"
 		look "Harsh morning light shines through the **window**"
 		desc "A window mounted on the wall opposite from the exit"
-		flavor "A heavy dust-storm ravages the once-green campus area."
+		flavor "A heavy dust storm ravages the once-green campus area."
 		breakable force.low
 	}
 
@@ -33,6 +33,16 @@ Apartment {
 		look "On the wall the **door** you emerged from" Hallway.R
 		desc "A sturdy door that provides at least some amount of privacy here"
 		room R, Hallway.R
+	}
+
+	entity Computer {
+		usable
+		keyword "computer", "desktop"
+		name "computer"
+		desc "A desktop computer that seems to be still functional"
+		look "There is a desktop **computer** on the table"
+		room R
+		computer "Start.Apartment.Computer"
 	}
 
 	cmd.do command.go (Link) {
@@ -69,28 +79,8 @@ Hallway {
 		guard Ground-Floor.R "The ground floor is off-limits while the **curfew** is active"
 
 		flavor "He stands purposefully blocking the hallway."
-	}
 
-	Guard-Talk {
-
-		entity curfew {
-			keyword "curfew"
-			name "Curfew?"
-			line Guard "Nobody is allowed outside until the dust storm has passed"
-		}
-
-		entity who {
-			keyword "who"
-			name "Who are you?"
-			line Guard "That's none of your business"
-		}
-
-		entity pass {
-			keyword "pass", "let", "go", "leave", "step"
-			name "Let me pass!"
-			line Guard "Nope."
-		}
-		
+		talks "Start.Hallway.Guard"
 	}
 
 	entity Door-Handle {
@@ -113,6 +103,16 @@ Ground-Floor {
 		desc "The bottom floor of the apartment building"
 	}
 
+	entity Door {
+		can-open
+		keyword "door", "exit"
+		name "door"
+		desc "Building door"
+		look "There is a **door** that leads outside" R
+		room R, Yard.R
+		locked-from Yard.R
+	}
+
 }
 
 Yard {
@@ -121,7 +121,7 @@ Yard {
 		keyword "yard", "outside"
 		name "yard"
 		desc "The great outdoors"
-		flavor "You try to orient yourself in the dust-storm"
+		flavor "You try to orient yourself in the dust storm"
 	}
 
 }
@@ -129,6 +129,7 @@ Yard {
 link Apartment.R Yard.R Apartment.Window
 link Apartment.R Hallway.R Apartment.Door
 link Hallway.R Ground-Floor.R
+link Ground-Floor.R Yard.R Ground-Floor.Door
 
 # Starting room for the player
 room Player Apartment.R

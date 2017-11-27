@@ -9,19 +9,23 @@ case class GameText(spans: Vector[TextSpan], ephemeral: Boolean = false, overrid
 
 case class DelayedCommand(command: vm.Entity, options: Vector[vm.Entity], previousLine: String, hadKeyword: Boolean)
 
-class GameInstance {
+class GameInstance(val path: String, val module: String = "main", val shared: vm.SharedContext = new vm.SharedContext) {
 
-  private val (context, actions) = Initialization.compileGame()
+  private val (context, actions) = Initialization.compileGame(path, module, shared)
+  actions.gameInstance = this
 
   // Tables defined in the code
   private val tabCmdKeyword = context.query[vm.Entity, String]("cmd.keyword") _
   private val tabCmdSelect = context.query[vm.Entity, vm.Rule]("cmd.select") _
+  private val tabCmdDiscard = context.query[vm.Entity, vm.Rule]("cmd.discard") _
   private val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
   private val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
   private val tabName = context.query[vm.Entity, String]("name") _
   private val tabKeyword = context.query[vm.Entity, String]("keyword") _
   private val tabGameTitle = context.query[String]("game.title") _
   private val tabGameWelcome = context.query[String]("game.welcome") _
+  private val tabSubgameInit = context.query[String, vm.Rule, Int]("subgame.init") _
+  private val tabSubgameFini = context.query[vm.Rule, Int]("subgame.fini") _
 
   private def fmt(str: String): Vector[TextSpan] = {
     val parts = str.split("\\*\\*")
@@ -35,6 +39,40 @@ class GameInstance {
   }
 
   /**
+    * Runs the subgame initializers
+    * @param context Argument passed from the parent game
+    */
+  def startSubgame(context: String): ArrayBuffer[String] = {
+    actions.wantsToPopSubGame = false
+    actions.listenToPrint {
+      var inits = tabSubgameInit(Some(""), None, None).toSeq
+      if (context != "") inits ++= tabSubgameInit(Some(context), None, None).toSeq
+      val sortedInits = inits.sortBy(_._3)
+      for (init <- sortedInits) {
+        val rule = init._2
+        rule.query().foreach(bind => rule.execute(bind))
+      }
+    }
+  }
+
+  /**
+    * Runs the subgame finalizers
+    */
+  def stopSubgame(): Unit = {
+    var finis = tabSubgameFini(None, None).toSeq
+    val sortedFinis = finis.sortBy(_._2)
+    for (fini <- sortedFinis) {
+      val rule = fini._1
+      rule.query().foreach(bind => rule.execute(bind))
+    }
+  }
+
+  /**
+    * Should the game pop as a subgame
+    */
+  def wantsToPop = actions.wantsToPopSubGame
+
+  /**
     * This is the only public API of the game engine!
     *
     * Passes some input to the game and returns the response from the game.
@@ -46,6 +84,19 @@ class GameInstance {
     * @return Text to print to the user.
     */
   def interact(input: String): GameText = {
+
+    // Route to subgame (unless some special queries)
+    if (input.trim != "/hello" && input.trim != "/title") {
+      actions.activeSubGame match {
+        case Some(subGame) =>
+          if (subGame.wantsToPop) {
+            actions.activeSubGame = None
+          } else {
+            return subGame.interact(input)
+          }
+        case None =>
+      }
+    }
 
     if (input.startsWith("/")) {
       val parts = input.drop(1).split(' ')
@@ -151,17 +202,22 @@ class GameInstance {
         options.toVector
       }
 
-      if (filteredOptions.size == 0) {
+      val discards = tabCmdDiscard(Some(cmd), None).map(_._2).toSeq
+      val finalOptions = filteredOptions.filterNot(opt => {
+        discards.exists(rule => rule.query(db.Pattern(Some(opt))).nonEmpty)
+      })
+
+      if (finalOptions.size == 0) {
         // No options -> fail
         GameText(fmt(s"Found nothing relevant to ${matchedKeyword}"), true)
-      } else if (filteredOptions.size == 1 && restOfLine.nonEmpty) {
+      } else if (finalOptions.size == 1 && restOfLine.nonEmpty) {
         // Single selected option -> execute command
-        executeCommandRule(cmd, Some(filteredOptions.head))
+        executeCommandRule(cmd, Some(finalOptions.head))
       } else {
         // Multiple or unselected options, show choices
-        commandUnderSelect = Some(DelayedCommand(cmd, filteredOptions, line, restOfLine.nonEmpty))
+        commandUnderSelect = Some(DelayedCommand(cmd, finalOptions, line, restOfLine.nonEmpty))
 
-        val names = for ((option, index) <- filteredOptions.zipWithIndex) yield {
+        val names = for ((option, index) <- finalOptions.zipWithIndex) yield {
           val name = tabName(Some(option), None).toStream.headOption.map(_._2).getOrElse("(unknown)")
           s"${index + 1}. ${name}"
         }
@@ -201,7 +257,9 @@ class GameInstance {
 }
 
 class Game {
-  var instance = new GameInstance()
+  val gamePath = "Otaniemi_2167"
+
+  var instance = new GameInstance(gamePath)
   val inputs = new ArrayBuffer[String]()
 
   private def errorToText(err: lang.CompileError): GameText = {
@@ -213,7 +271,7 @@ class Game {
     input.trim match {
       case "/reload" =>
         try {
-          instance = new GameInstance()
+          instance = new GameInstance(gamePath)
           inputs.clear()
           instance.interact("/hello")
         } catch {
@@ -221,7 +279,7 @@ class Game {
         }
       case "/replay" =>
         try {
-          instance = new GameInstance()
+          instance = new GameInstance(gamePath)
           val allInputs = Vector("/hello") ++ inputs
           for (input <- allInputs.dropRight(1)) {
             instance.interact(input)

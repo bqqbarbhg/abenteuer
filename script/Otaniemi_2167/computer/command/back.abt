@@ -1,0 +1,16 @@
+
+entity command.back {
+	cmd.keyword "back"
+	cmd.help "**back**: Go back a directory"
+
+	cmd.do () {
+		cwd *CWD Dir
+		dir Dir Name Parent
+	} -> {
+		! cwd *CWD Dir
+		cwd *CWD Parent
+		print: "Current directory: **{name:Parent}**"
+	} 0
+}
+
+

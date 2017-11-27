@@ -25,9 +25,7 @@ entity command.go {
 		! room *Player Room
 	}
 
-	cmd.do (Link) {
-		room *Player Room
-	} -> {
+	cmd.do (Link) -> {
 		print: "Walked to **{name:Link}**"
 	} 20
 

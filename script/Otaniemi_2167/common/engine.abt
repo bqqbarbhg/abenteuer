@@ -1,4 +1,6 @@
 
+# This file should only contain tables for interfacing with the engine!
+
 # Namespace for engine-level commands, the game understands this
 # and queries these tables.
 cmd {
@@ -22,6 +24,9 @@ cmd {
 	# For commands that need to select an argument
 	table select cmd func { }
 
+	# Filter the results of `cmd.select` (matching values are removed)
+	table discard cmd func { }
+
 	# A short abbrevation for the command with matching keyword
 	table abbrev cmd abbrev keyword { }
 
@@ -32,17 +37,33 @@ external print "print"
 # Fail a command
 external fail "fail"
 
-# Keywords to describe entities
-table keyword self kw
+# Games inside the game
+subgame {
+	table game name module
+	table init name func order {
+		default order 0
+	}
+	table fini func order {
+		default order 0
+	}
+	external push "subgame.push"
+	external pop "subgame.pop"
+}
 
-# A physical object that resides in the world
-table object self
+game {
+	table title title
+	table welcome welcome
+}
+
+
+# Keywords to describe entities
+table keyword self kw { shared }
 
 # Name
-table name self name { unique self }
+table name self name { shared; unique self }
 
 # Short description
-table desc self desc { unique self }
+table desc self desc { shared; unique self }
 
 # Missing values (for interpolation)
 table string-missing tab str { unique tab }

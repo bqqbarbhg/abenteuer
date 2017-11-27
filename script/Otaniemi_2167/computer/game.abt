@@ -1,0 +1,16 @@
+
+subgame.init "" () {
+	cwd *CWD Dir
+} -> {
+	! cwd *CWD Dir
+} -10
+
+subgame.init "" () -> {
+	print: "Welcome to **Abenteuer OS**"
+	print: "Type **help** to get a list of commands"
+} -5
+
+subgame.fini () -> {
+	print: "Logging off..."
+}
+

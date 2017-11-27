@@ -1,5 +1,5 @@
 
-entity xyzzy {
+entity command.xyzzy {
 	cmd.keyword "xyzzy"
 
 	cmd.do () -> {

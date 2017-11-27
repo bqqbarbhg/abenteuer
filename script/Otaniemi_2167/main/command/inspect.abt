@@ -1,6 +1,6 @@
 
 entity command.inspect {
-	cmd.keyword "inspect", "stare at"
+	cmd.keyword "inspect", "stare at", "examine"
 	cmd.abbrev "i" "inspect"
 	cmd.help "**inspect**: Inspect finer details of objects"
 
@@ -18,7 +18,7 @@ entity command.inspect {
 		! open Door
 	} -> {
 		print: "Looks like it could lead somewhere if opened"
-	} 1
+	} p.inspect.Door
 
 	cmd.do (Door) {
 		room *Player Room
@@ -26,13 +26,18 @@ entity command.inspect {
 		open Door
 	} -> {
 		print: "Leads to **{name:Link}**"
-	} 1
+	} p.inspect.Door
 
 	cmd.do (Thing) {
 		flavor Thing Text
 	} -> {
 		print: Text
-	} 5
+	} p.inspect.Flavor
 }
 
+p.inspect {
+	define StudentId 1
+	define Door 2
+	define Flavor 3
+}
 

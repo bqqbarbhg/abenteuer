@@ -1,0 +1,20 @@
+entity help {
+	cmd.keyword "help"
+
+	cmd.help "**help**: Help for using the command line interface"
+
+	cmd.do () {
+		cmd.help Command Help
+	} -> {
+		print: Help
+	}
+
+	cmd.do() -> {
+		print: ""
+		print: "Hint: You can the argument of the command to get a listing,
+for example try to type:"
+		print: "**> cd**"
+	} 10
+}
+
+

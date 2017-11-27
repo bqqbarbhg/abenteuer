@@ -11,6 +11,8 @@ of the content of the game!
 
 ### Apartment block
 
+#### Option A
+
 First open the door and enter the hallway.
 
 ```
@@ -30,4 +32,39 @@ Break the window with the door handle and jump to the yard.
 break window
 go outside
 ```
+
+#### Option B
+
+Use to the computer to find out 3987359-D:s identity.
+
+```
+use computer
+cd personal
+cat people
+exit
+```
+
+First open the door and enter the hallway.
+
+```
+open door
+go hallway
+```
+
+Intimidate the guard with knowledge of his identity
+
+```
+talk guard
+say name
+bye
+```
+
+Go outside
+
+```
+go downstairs
+open door
+go outside
+```
+
 

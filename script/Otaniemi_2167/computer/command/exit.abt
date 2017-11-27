@@ -1,0 +1,10 @@
+
+entity command.exit {
+	cmd.keyword "exit", "close", "quit"
+	cmd.help "**exit**: Close the computer terminal"
+
+	cmd.do () -> {
+		subgame.pop:
+	}
+}
+

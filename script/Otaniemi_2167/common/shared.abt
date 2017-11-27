@@ -1,0 +1,5 @@
+
+table student-name id name { shared }
+table scared self { shared }
+table talks self entry { shared }
+

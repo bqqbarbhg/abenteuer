@@ -1,0 +1,41 @@
+
+Start.Hallway.Guard {
+
+	subgame.init "Start.Hallway.Guard" () -> {
+		current-topic *Root
+		print: "**Guard**: The ground floor is off-limits while the **curfew** is active"
+	}
+
+	entity Guard {
+		name "Guard"
+	}
+
+	entity Root {
+	}
+
+	entity curfew {
+		keyword "curfew"
+		name "Curfew?"
+		topic Root
+		line Guard "Nobody is allowed outside until the dust **storm** has passed"
+	}
+
+	entity storm {
+		keyword "storm"
+		name "Storm?"
+		topic Root
+		requires curfew
+		line Guard "Weird storm weird storm weird storm"
+	}
+
+	entity identity {
+		keyword "name", "identity"
+		name "I know who you are, Ju-on!"
+		topic Root
+		line Guard "I'll let you go if you promise not to tell anyone!"
+		requires-identity "3987359-D"
+		will-scare "Start.Hallway.Guard"
+	}
+
+}
+

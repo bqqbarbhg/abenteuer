@@ -5,9 +5,13 @@ table guard self area message {
 }
 
 cmd.do command.go (Link) {
+	room *Player Room
 	guard Guard Link Message
+	room Guard Room
+	! scared Guard
 } -> {
 	print: "**{name:Guard}**: {Message}"
 	fail:
 } -10
+
 

@@ -1,0 +1,42 @@
+
+Start.Apartment.Computer {
+
+subgame.init "Start.Apartment.Computer" () -> {
+	cwd *CWD *root
+}
+
+entity root {
+	name "/"
+}
+
+entity helloworld {
+	name "/helloworld"
+	keyword "helloworld"
+	file "helloworld" root
+	cat "Hello world!"
+}
+
+entity personal {
+	name "/personal/"
+	keyword "personal"
+	dir "personal" root
+}
+
+entity diary {
+	name "/personal/people"
+	keyword "people"
+	file "people" personal
+	cat "Student names:
+**3987359-D** - Ju-on Taker
+  Active guard duty near this apartment
+
+To identify:
+**4063438-K** - ?????
+**4063438-K** - ?????
+**4063438-K** - ?????
+"
+	contains-student-name "3987359-D" "Ju-on Taker"
+}
+
+}
+

@@ -1,0 +1,11 @@
+
+table locked-from Door Room
+
+cmd.do command.open (Door) {
+	room *Player Room
+	locked-from Door Room
+} -> {
+	print: "It's locked from this side!"
+	fail:
+} -20
+

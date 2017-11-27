@@ -1,0 +1,15 @@
+
+entity command.use {
+	cmd.keyword "use"
+	cmd.help "**use**: Use devices or mechanisms"
+	cmd.abbrev "u" "use"
+
+	cmd.select (Thing) {
+		room *Player Room
+		room Thing Room
+		usable Thing
+	}
+
+	# cmd.do overridden per entity!
+}
+

@@ -1,0 +1,22 @@
+
+entity command.cat {
+	cmd.keyword "cat", "type"
+	cmd.help "**cat**: Print file"
+
+	cmd.select (File) {
+		cwd *CWD Parent
+		file File Name Parent
+		cat File Cat
+	}
+
+	cmd.do (File) {
+		cwd *CWD Parent
+		file File Name Parent
+		cat File Cat
+	} -> {
+		print: Cat
+	}
+
+}
+
+

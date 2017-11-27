@@ -1,0 +1,32 @@
+
+entity command.say {
+	cmd.keyword "say", "talk", "speak", "ask", "discuss"
+	cmd.help "**say**: Say something"
+
+	cmd.select (Line) {
+		current-topic Topic
+		topic Line Topic
+	}
+
+	cmd.discard (Line) {
+		requires Line Dep
+		! spoken Dep
+	}
+
+	cmd.do (Line) {
+		! spoken Line
+	} -> {
+		spoken Line
+	}
+
+	cmd.do (Line) -> {
+		print: "**You**: {name:Line}"
+	} 5
+
+	cmd.do (Line) {
+		line Line Who Text
+	} -> {
+		print: "**{name:Who}**: {Text}"
+	} 10
+}
+

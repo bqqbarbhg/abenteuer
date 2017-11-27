@@ -1,0 +1,7 @@
+
+# For doors and other lockable things
+table open self
+
+# Something that can be opened
+table can-open self
+

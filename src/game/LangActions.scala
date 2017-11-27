@@ -1,6 +1,8 @@
 package game
 
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.immutable.Map
+import scala.collection.mutable
 
 /** Contains actions that can be used from the language */
 class LangActions(val context: vm.Context) {
@@ -11,6 +13,12 @@ class LangActions(val context: vm.Context) {
   val templateRegex = raw"""\{([^}]*)\}""".r
 
   var hasFailed: Boolean = false
+
+  var subGames: Map[String, GameInstance] = Map[String, GameInstance]()
+  var gameInstance: GameInstance = null // Sorry :(
+
+  var activeSubGame: Option[GameInstance] = None
+  var wantsToPopSubGame: Boolean = false
 
   def listenToPrint(block: => Unit): ArrayBuffer[String] = {
     val buffer = new ArrayBuffer[String]()
@@ -50,6 +58,19 @@ class LangActions(val context: vm.Context) {
 
   def fail(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {
     hasFailed = true
+  }
+
+  def subgamePush(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {
+    val args = rule.mapArgs(mapping, binds)
+    val game = subGames(args(0).get.asInstanceOf[String])
+    val prints = game.startSubgame(args(1).getOrElse("").asInstanceOf[String])
+    printTarget.foreach(_.appendAll(prints))
+    activeSubGame = Some(game)
+  }
+
+  def subgamePop(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {
+    gameInstance.stopSubgame()
+    wantsToPopSubGame = true
   }
 
 }

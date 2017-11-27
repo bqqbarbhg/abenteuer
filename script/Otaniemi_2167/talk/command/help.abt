@@ -1,0 +1,18 @@
+entity help {
+	cmd.keyword "help"
+
+	cmd.help "**help**: Help for using the talking interface"
+
+	cmd.do () {
+		cmd.help Command Help
+	} -> {
+		print: Help
+	}
+	cmd.do() -> {
+		print: ""
+		print: "Hint: To get a list of all what you can say at any moment type:"
+		print: "**> say**"
+	} 10
+}
+
+

@@ -1,0 +1,47 @@
+
+Test {
+
+entity Root {
+	name "/root/"
+}
+
+subgame.init "root" () -> {
+	cwd *CWD *Root
+}
+
+subgame.init "devlog" () -> {
+	cwd *CWD *devlog
+}
+
+entity devlog {
+	name "/root/devlog/"
+	keyword "devlog"
+	dir "devlog" Root
+}
+
+entity hello {
+	keyword "hello"
+	name "/root/hello"
+	file "hello" Root
+	cat "Hello world!"
+}
+
+entity studentid {
+	keyword "studentid"
+	name "/root/devlog/studentid"
+	file "studentid" devlog
+	cat "Student ID check letter: (ID mod 26 + 'A')
+
+-- Funny note:
+I used https://random.org to generate the player's student ID (4063438-K) and just chose the check digit out of nowhere. Then later I wanted to build some consistency to the world and decided that the check letter should be just mod 26 of the number. Enter Python:
+
+>>> chr(ord('A') + 4063438 % 36)
+'K'
+
+Surprising right?
+"
+}
+
+}
+
+

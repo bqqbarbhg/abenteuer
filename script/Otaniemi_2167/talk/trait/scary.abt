@@ -1,0 +1,12 @@
+
+# Saying the line will scare an actor
+table will-scare self actor-id 
+
+cmd.do command.say (Line) {
+	will-scare Line ActorId
+	talks Actor ActorId
+	! scared Actor
+} -> {
+	scared Actor
+} 50
+

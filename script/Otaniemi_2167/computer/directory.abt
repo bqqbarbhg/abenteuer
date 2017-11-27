@@ -1,0 +1,7 @@
+
+table dir self name parent
+table file self name parent
+table cat self text
+table cwd self path
+
+

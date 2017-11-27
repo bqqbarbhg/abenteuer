@@ -1,0 +1,28 @@
+
+entity command.ls {
+	cmd.keyword "ls", "dir"
+	cmd.help "**ls**: List files in current directory"
+
+	cmd.do () {
+		cwd *CWD Dir
+	} -> {
+		print: "Current directory: **{name:Dir}**"
+		print: ""
+	} 0
+
+	cmd.do () {
+		cwd *CWD Dir
+		dir Child Name Dir
+	} -> {
+		print: "Directory: **{name:Child}**"
+	} 1
+
+	cmd.do () {
+		cwd *CWD Dir
+		file Child Name Dir
+	} -> {
+		print: "Text file: **{name:Child}**"
+	} 2
+}
+
+

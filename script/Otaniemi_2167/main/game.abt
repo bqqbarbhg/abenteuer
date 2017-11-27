@@ -1,7 +1,4 @@
 
-table game.title title
-table game.welcome welcome
-
 game.title "Otnaniemi 2167"
 
 game.welcome "Welcome to **Otaniemi 2167**.
@@ -16,4 +13,6 @@ To examine your surroundings input:
 > look
 "
 
+subgame.game "talk" "talk"
+subgame.game "computer" "computer"
 

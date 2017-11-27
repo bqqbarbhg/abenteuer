@@ -1,0 +1,20 @@
+
+entity command.cd {
+	cmd.keyword "cd"
+	cmd.help "**cd**: Change directory"
+
+	cmd.select (Dir) {
+		cwd *CWD Parent
+		dir Dir Name Parent
+	}
+
+	cmd.do (Dir) {
+		cwd *CWD Parent
+		dir Dir Name Parent
+	} -> {
+		! cwd *CWD Parent
+		cwd *CWD Dir
+		print: "Current directory: **{name:Dir}**"
+	} 0
+}
+

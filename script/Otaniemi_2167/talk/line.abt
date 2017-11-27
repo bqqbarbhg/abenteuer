@@ -1,0 +1,13 @@
+
+# Topic the line can be reached from
+table topic self topic
+
+# Line contents
+table line self who text
+
+# Don't allow line before another has been done
+table requires self dependency
+
+# All the spoken lines
+table spoken self { unique self }
+

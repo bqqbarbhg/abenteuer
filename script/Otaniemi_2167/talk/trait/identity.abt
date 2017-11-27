@@ -1,0 +1,9 @@
+
+# The line requires the player to know the identity
+table requires-identity self student-id
+
+cmd.discard command.say (Line) {
+	requires-identity Line Id
+	! student-name Id Name
+}
+

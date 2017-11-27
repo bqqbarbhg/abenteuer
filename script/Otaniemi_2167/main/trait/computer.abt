@@ -1,0 +1,12 @@
+
+# Link to `computer` subgame
+table computer self entry
+
+cmd.do command.use (Computer) {
+	computer Computer Entry
+} -> {
+	print: "You log into **{name:Computer}**..."
+	print: ""
+	subgame.push: "computer" Entry
+}
+
