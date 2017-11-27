@@ -8,15 +8,21 @@ let currentMessages = [];
 let currentCommand = null;
 let prevEphemeral = false;
 
+const date = new Date()
+const session = date.getTime().toString() + Math.random().toString().substring(2);
+
 function interact(input) {
 	if (input.startsWith('/connect')) {
 		const port = input.split(' ')[1];
 		return connect(port);
 	}
-
+	
+	const headers = new Headers();
+	headers.append("X-Session", session);
 	return fetch(endpoint, {
 		method: "POST",
 		body: input,
+		headers: headers,
 	}).then(response => response.json())
 }
 

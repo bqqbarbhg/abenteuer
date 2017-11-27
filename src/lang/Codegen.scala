@@ -131,7 +131,7 @@ class BindCollection(val args: Vector[TokenId]) {
         case -1 =>
           constants += value
           constants.length - 1
-        case valid => -valid
+        case valid => valid
       }
 
       // Constants have purely negative indices, so first constant is -1
