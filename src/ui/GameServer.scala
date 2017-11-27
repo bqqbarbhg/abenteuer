@@ -6,6 +6,7 @@ import java.net.ServerSocket
 import util.EscapeUtil.EscapedString
 
 import scala.util.Try
+import scala.collection.mutable
 
 /**
   * Simple (very bad) HTML server implementation for the game.
@@ -13,9 +14,11 @@ import scala.util.Try
   */
 object GameServer extends App {
 
-  val theGame = new game.Game()
+  var sessionCount = 0
+  val sessions = new mutable.HashMap[String, (game.Game, Int)]()
 
   val contentLengthRegex = raw"""\s*content-length:\s*(\d+)\s*""".r
+  val originalIpRegex = raw"""\s*x-original-ip:\s*(\S+)\s*""".r
 
   val port = args.lift(1).flatMap(arg => Try(arg.toInt).toOption).getOrElse(8080)
   val socket = new ServerSocket(port)
@@ -33,21 +36,29 @@ object GameServer extends App {
 
     var line: String = ""
     var contentLength: Int = 0
+    var originalIp: String = ""
     do {
       line = in.readLine()
       line.toLowerCase match {
         case contentLengthRegex(value) =>
           // Can't fail since regex requires \d+
           contentLength = value.toInt
+        case originalIpRegex(ip) =>
+          originalIp = ip
         case _ =>
       }
     } while (line != "")
+
+    val (theGame, sessionId) = sessions.getOrElseUpdate(originalIp, {
+      sessionCount += 1
+      (new game.Game(), sessionCount)
+    })
 
     val contentBytes = new Array[Char](contentLength)
     in.read(contentBytes)
     val content = new String(contentBytes)
     val command = content.trim
-    println(s"> ${command.escape}")
+    println(s"$sessionId> ${command.escape}")
 
     val result = theGame.interact(command)
 

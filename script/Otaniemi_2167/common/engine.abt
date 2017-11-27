@@ -37,6 +37,11 @@ external print "print"
 # Fail a command
 external fail "fail"
 
+# Functions to run after every move
+table tick id func order {
+	default order 0
+}
+
 # Games inside the game
 subgame {
 	table game name module

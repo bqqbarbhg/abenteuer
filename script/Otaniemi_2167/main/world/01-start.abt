@@ -126,6 +126,21 @@ Yard {
 
 }
 
+table has-won mark
+
+entity WinCondition
+
+tick WinCondition () {
+	! has-won 1
+	room *Player *Yard.R
+} -> {
+	has-won 1
+	print: ""
+	print: "**!! Woo you won !!**"
+	print: "Feel free to continue roaming around though :)"
+	print: ""
+}
+
 link Apartment.R Yard.R Apartment.Window
 link Apartment.R Hallway.R Apartment.Door
 link Hallway.R Ground-Floor.R

@@ -25,7 +25,7 @@ Start.Hallway.Guard {
 		name "Storm?"
 		topic Root
 		requires curfew
-		line Guard "Weird storm weird storm weird storm"
+		line Guard "There is a class III dust storm raging outside, we can't let anyone out"
 	}
 
 	entity identity {

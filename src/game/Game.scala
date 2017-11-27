@@ -20,6 +20,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
   private val tabCmdDiscard = context.query[vm.Entity, vm.Rule]("cmd.discard") _
   private val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
   private val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
+  private val tabTick = context.query[Any, vm.Rule, Int]("tick") _
   private val tabName = context.query[vm.Entity, String]("name") _
   private val tabKeyword = context.query[vm.Entity, String]("keyword") _
   private val tabGameTitle = context.query[String]("game.title") _
@@ -250,7 +251,14 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
     val tryRules = tabCmdDo(Some(command), None, None).toVector.sortBy(row => row._3).map(_._2)
     val text = actions.listenToPrint {
       executeRuleChain(tryRules, entity)
+
+      val ticks = tabTick(None, None, None).toStream.groupBy(_._1)
+      for ((_, rows) <- ticks) {
+        val sorted = rows.sortBy(_._3).map(_._2).toVector
+        executeRuleChain(sorted, None)
+      }
     }
+
     GameText(fmt(text.mkString("\n")))
   }
 
