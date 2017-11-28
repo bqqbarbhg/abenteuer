@@ -122,24 +122,12 @@ Yard {
 		name "yard"
 		desc "The great outdoors"
 		flavor "You try to orient yourself in the dust storm"
+		flavor "A **path** trails off into the storm"
 	}
 
 }
 
 table has-won mark
-
-entity WinCondition
-
-tick WinCondition () {
-	! has-won 1
-	room *Player *Yard.R
-} -> {
-	has-won 1
-	print: ""
-	print: "**!! Woo you won !!**"
-	print: "Feel free to continue roaming around though :)"
-	print: ""
-}
 
 link Apartment.R Yard.R Apartment.Window
 link Apartment.R Hallway.R Apartment.Door

@@ -27,6 +27,9 @@ cmd {
 	# Filter the results of `cmd.select` (matching values are removed)
 	table discard cmd func { }
 
+	# Add more keywords to things in `cmd.select`
+	table add-keyword cmd func { }
+
 	# A short abbrevation for the command with matching keyword
 	table abbrev cmd abbrev keyword { }
 

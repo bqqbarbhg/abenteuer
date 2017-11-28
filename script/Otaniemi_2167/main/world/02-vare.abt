@@ -1,0 +1,53 @@
+
+Vare {
+
+Path {
+
+	entity R {
+		keyword "path"
+		name "path"
+		desc "A winding path that hopefully leads somewhere"
+	}
+
+}
+
+Vare {
+
+	entity R {
+		keyword "vare"
+		name "vare"
+		desc "The main building work was completed in 2057, but large areas are still under construction"
+	}
+
+}
+
+tick "lost-in-path" () {
+	room *Player *Path.R
+} -> {
+	print: "You follow the path and get lost in the dust"
+	print: "There is no way to return anymore, the only way is forwards"
+	print: "The path leads to a large building, which seems familiar"
+	print: "You arrive at **vare**"
+	! room *Player *Path.R
+	room *Player *Vare.R
+}
+
+link Start.Yard.R Path.R
+
+table has-won mark
+entity WinCondition
+
+tick WinCondition () {
+	! has-won 1
+	room *Player *Vare.R
+} -> {
+	has-won 1
+	print: ""
+	print: "**!! Woo you won !!**"
+	print: "Feel free to continue roaming around though :)"
+	print: ""
+}
+
+
+}
+

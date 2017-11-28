@@ -18,6 +18,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
   private val tabCmdKeyword = context.query[vm.Entity, String]("cmd.keyword") _
   private val tabCmdSelect = context.query[vm.Entity, vm.Rule]("cmd.select") _
   private val tabCmdDiscard = context.query[vm.Entity, vm.Rule]("cmd.discard") _
+  private val tabCmdAddKeyword = context.query[vm.Entity, vm.Rule]("cmd.add-keyword") _
   private val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
   private val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
   private val tabTick = context.query[Any, vm.Rule, Int]("tick") _
@@ -197,7 +198,15 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
 
       val filteredOptions = if (restOfLine.nonEmpty) {
         // Filter to entities with matching keywords
-        options.filter(e => tabKeyword(Some(e), None).exists(row => row._2 == restOfLine)).toVector
+        options.filter(e => {
+          val entityKeywords = tabKeyword(Some(e), None).map(_._2).toSeq
+          val addKeywords = tabCmdAddKeyword(Some(cmd), None).flatMap(row => {
+            val rule = row._2
+            rule.query(db.Pattern(Some(e), None)).map(_(1).get.asInstanceOf[String])
+          }).toSeq
+          val keywords = entityKeywords ++ addKeywords
+          keywords.exists(_ == restOfLine)
+        }).toVector
       } else {
         // Show all of them
         options.toVector
@@ -234,16 +243,22 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
 
   }
 
-  private def executeRuleChain(rules: Vector[vm.Rule], entity: Option[vm.Entity]): Unit = {
+  /** Execute ordered rules with fail: command support, returns if any rule matched */
+  private def executeRuleChain(rules: Vector[vm.Rule], entity: Option[vm.Entity]): Boolean = {
+    var anyMatch = false
+
     val pattern = entity.map(Some(_)).toArray[Option[Any]]
     val matches = rules.map(rule => (rule, rule.query(pattern).toVector)).toVector
     for {
       (rule, patterns) <- matches
       pattern <- patterns
     } {
+      anyMatch = true
       rule.execute(pattern)
-      if (actions.hasFailed) return
+      if (actions.hasFailed) return anyMatch
     }
+
+    anyMatch
   }
 
   private def executeCommandRule(command: vm.Entity, entity: Option[vm.Entity]): GameText = {
@@ -252,11 +267,23 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
     val text = actions.listenToPrint {
       executeRuleChain(tryRules, entity)
 
-      val ticks = tabTick(None, None, None).toStream.groupBy(_._1)
-      for ((_, rows) <- ticks) {
-        val sorted = rows.sortBy(_._3).map(_._2).toVector
-        executeRuleChain(sorted, None)
-      }
+      var somethingMatched: Boolean = false
+      var matchCounter: Int = 0
+      do {
+        somethingMatched = false
+
+        matchCounter += 1
+        if (matchCounter > 1000) {
+          throw new RuntimeException("Tried to apply tick rules for over 1000 iterations, maybe there is a loop!")
+        }
+
+        val ticks = tabTick(None, None, None).toStream.groupBy(_._1)
+        for ((_, rows) <- ticks) {
+          val sorted = rows.sortBy(_._3).map(_._2).toVector
+          val matched = executeRuleChain(sorted, None)
+          somethingMatched ||= matched
+        }
+      } while (somethingMatched)
     }
 
     GameText(fmt(text.mkString("\n")))
@@ -276,29 +303,38 @@ class Game {
   }
 
   def interact(input: String): GameText = {
-    input.trim match {
-      case "/reload" =>
-        try {
-          instance = new GameInstance(gamePath)
-          inputs.clear()
-          instance.interact("/hello")
-        } catch {
-          case err: lang.CompileError => errorToText(err)
-        }
-      case "/replay" =>
-        try {
-          instance = new GameInstance(gamePath)
-          val allInputs = Vector("/hello") ++ inputs
-          for (input <- allInputs.dropRight(1)) {
-            instance.interact(input)
+    try {
+      input.trim match {
+        case "/reload" =>
+          try {
+            instance = new GameInstance(gamePath)
+            inputs.clear()
+            instance.interact("/hello")
+          } catch {
+            case err: lang.CompileError => errorToText(err)
           }
-          instance.interact(allInputs.last)
-        } catch {
-          case err: lang.CompileError => errorToText(err)
-        }
-      case _ =>
-        inputs += input
-        instance.interact(input)
+        case "/replay" =>
+          try {
+            instance = new GameInstance(gamePath)
+            val allInputs = Vector("/hello") ++ inputs
+            for (input <- allInputs.dropRight(1)) {
+              instance.interact(input)
+            }
+            instance.interact(allInputs.last)
+          } catch {
+            case err: lang.CompileError => errorToText(err)
+          }
+        case _ =>
+          inputs += input
+          instance.interact(input)
+      }
+    } catch {
+      case err: Exception =>
+        println(s"Error on interact: ${err.getMessage}")
+        err.printStackTrace()
+        val spans = Vector(TextSpan("Runtime error:", ui.TextStyle.Bold),
+          TextSpan("\n" + err.toString, ui.TextStyle.Normal))
+        GameText(spans, true)
     }
   }
 }

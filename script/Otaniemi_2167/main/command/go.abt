@@ -18,14 +18,36 @@ entity command.go {
 		open Door
 	}
 
+	cmd.add-keyword (Link Keyword) {
+		room *Player Room
+		room Door Room
+		open Door
+		link Room Link Door
+		keyword Door Keyword
+	}
+
 	cmd.do (Link) {
 		room *Player Room
+		link Room Link Door
 	} -> {
 		room *Player Link
 		! room *Player Room
 	}
 
-	cmd.do (Link) -> {
+	cmd.do (Door) {
+		room *Player Room
+		room Door Room
+		open Door
+		link Room Link Door
+	} -> {
+		room *Player Link
+		! room *Player Room
+	}
+
+	cmd.do (Link) {
+		room *Player Room
+		link Room Link Door
+	} -> {
 		print: "Walked to **{name:Link}**"
 	} 20
 

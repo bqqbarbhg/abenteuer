@@ -33,5 +33,27 @@ entity command.look {
 	} -> {
 		print: Flavor
 	} 5
+
+
+	cmd.do () -> {
+		print: ""
+		print: "Nearby:"
+	} 7
+
+	cmd.do () {
+		room *Player Room
+		link Room Link *AlwaysOpen
+	} -> {
+		print: "**{name:Link}**: {desc:Link}"
+	} 10
+
+	cmd.do () {
+		room *Player Room
+		link Room Link Door
+		room Door Room
+		open Door
+	} -> {
+		print: "**{name:Link}**: {desc:Link}"
+	} 10
 }
 
