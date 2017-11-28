@@ -1,0 +1,86 @@
+
+entity command.look {
+	cmd.keyword "look"
+	cmd.help "**look**: Look around your surroundings"
+	cmd.abbrev "l" "look"
+	cmd.abbrev "ls" "look"
+
+	cmd.do () {
+		room *Player Room
+	} -> {
+		println: "**{name:Room}**: {desc:Room}\n"
+	} 0
+
+	cmd.do () {
+		room *Player Room
+		flavor Room Text
+	} -> {
+		print: Text
+	} 1
+
+	cmd.do () {
+		room *Player Room
+		room Thing Room
+		look Thing Text
+		! item Thing
+	} -> {
+		print: Text
+	} 2
+
+	cmd.do () {
+		room *Player Room
+		room Thing Room
+		look Thing Text
+		item Thing
+		! taken Thing
+	} -> {
+		print: Text
+	} 2
+
+	cmd.do () {
+		room *Player Room
+		room Thing Room
+		item Thing
+		taken Thing
+	} -> {
+		print: "**{name:Thing}**, {desc:Thing}. "
+	} 3
+
+	cmd.do () -> {
+		print: "\n\nNearby: "
+	} 5
+
+	cmd.do () {
+		room *Player Room
+		link Room Link
+	} -> {
+		print: "**{name:Link}**, "
+	} 6
+
+	cmd.do () {
+		room *Player Room
+		directed-link Room Link
+	} -> {
+		print: "**{name:Link}**, "
+	} 6
+
+	cmd.do () {
+		room *Player Room
+		room Door Room
+		door Door
+	} -> {
+		print: "**{name:Door}**, "
+	} 6
+
+	cmd.do () -> {
+		print: "\n\nInventory: "
+	} 7
+
+	cmd.do () {
+		has *Player Thing
+	} -> {
+		print: "**{name:Thing}**, "
+	} 8
+}
+
+

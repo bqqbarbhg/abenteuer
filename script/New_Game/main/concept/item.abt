@@ -1,0 +1,16 @@
+
+# An item that can be picked up
+table item self { unique self }
+
+# Ownership of items
+table has self item { unique item }
+
+# Has the item been removed from it's original habitat
+table taken self { unique self }
+
+cmd.do command.inspect (Thing) {
+	has Owner Thing
+} -> {
+	print: "Held by **{name:Owner}**. "
+} 9
+

@@ -1,0 +1,11 @@
+
+# This is the main player instance
+entity Player {
+	keyword "self", "me", "player"
+	name "you"
+	desc "Yes, you"
+}
+
+# room Player Tutorial.Cell.R
+room Player Tutorial.Ground-Floor.R
+

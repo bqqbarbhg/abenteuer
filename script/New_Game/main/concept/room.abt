@@ -1,0 +1,10 @@
+
+# Rooms are what build the spatial world of the game
+table room self room
+
+table link a b { unordered a b }
+table directed-link a b
+
+# Alternative text for the link
+table link-text a b text
+

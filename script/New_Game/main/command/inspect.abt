@@ -1,0 +1,26 @@
+
+entity command.inspect {
+	cmd.keyword "inspect", "stare at", "examine"
+	cmd.abbrev "i" "inspect"
+	cmd.help "**inspect**: Inspect things"
+
+	cmd.select (Thing) {
+		room *Player R
+		room Thing R
+	}
+
+	cmd.select (Thing) {
+		has *Player Thing
+	}
+
+	cmd.do (Thing) -> {
+		println: "**{name:Thing}**: {desc:Thing}\n"
+	}
+
+	cmd.do (Thing) {
+		flavor Thing Text
+	} -> {
+		print: Text
+	} 10
+}
+

@@ -168,7 +168,7 @@ class Table(val numColumns: Int) extends Queryable {
     * Returns matched row indices, use queryRows() for returning indices.
     */
   def query(pattern: Pattern): Iterator[Row] = {
-    assert(pattern.length == numColumns)
+    assert(pattern.length == numColumns, s"Column mismatch: $numColumns wanted, ${pattern.length} given")
     val indexIterator = queryRows(pattern)
     new RowDataIterator(rowData, indexIterator)
   }

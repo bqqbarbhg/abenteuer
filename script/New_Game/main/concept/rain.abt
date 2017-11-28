@@ -1,0 +1,35 @@
+
+table umbrella self
+table raining self
+
+cmd.do command.take (Umbrella) {
+	has *Player Existing
+	umbrella Umbrella, Existing
+} -> {
+	println: "Can't pick up second umbrella, you already have **{name:Existing}**"
+	fail:
+} -20
+
+define has-umbrella () {
+	has *Player Umbrella
+	umbrella Umbrella
+}
+
+cmd.do command.go (Rain) {
+	raining Rain
+	! has-umbrella
+} -> {
+	print: "As you step outside, the rain starts short circuiting your biometric parts. "
+	print: "You need some way to protect yourself from the rain! "
+	fail:
+} -20
+
+cmd.do command.drop (Umbrella) {
+	room *Player Room
+	raining Room
+	umbrella Umbrella
+} -> {
+	print: "You can't drop your umbrella in the rain! "
+	fail:
+} -10
+

@@ -1,0 +1,13 @@
+
+entity command.exit {
+	cmd.keyword "exit"
+
+	cmd.do () { 
+		flag *is-subgame
+	} -> {
+		subgame.pop:
+	}
+}
+
+
+

@@ -1,0 +1,11 @@
+
+entity command.xyzzy {
+	cmd.keyword "xyzzy"
+
+	cmd.do () -> {
+		print: "Nothing happens..."
+		subgame.push: "proto_otaniemi_2167" ""
+	}
+}
+
+

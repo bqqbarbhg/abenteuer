@@ -1,0 +1,15 @@
+
+entity command.help {
+	cmd.keyword "help"
+
+	cmd.help "**help**: Help for using the interface"
+
+	cmd.do () {
+		cmd.help Command Help
+	} -> {
+		println: Help
+	}
+
+}
+
+

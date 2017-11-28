@@ -7,7 +7,8 @@ import scala.util.{Failure, Success, Try}
 
 case class GameText(spans: Vector[TextSpan], ephemeral: Boolean = false, overridePrompt: Option[String] = None)
 
-case class DelayedCommand(command: vm.Entity, options: Vector[vm.Entity], previousLine: String, hadKeyword: Boolean)
+case class CmdTargetPair(target: vm.Entity, command: vm.Entity)
+case class DelayedCommand(options: Vector[CmdTargetPair], previousLine: String, hadKeyword: Boolean)
 
 class GameInstance(val path: String, val module: String = "main", val shared: vm.SharedContext = new vm.SharedContext) {
 
@@ -19,7 +20,9 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
   private val tabCmdSelect = context.query[vm.Entity, vm.Rule]("cmd.select") _
   private val tabCmdDiscard = context.query[vm.Entity, vm.Rule]("cmd.discard") _
   private val tabCmdAddKeyword = context.query[vm.Entity, vm.Rule]("cmd.add-keyword") _
+  private val tabCmdImplement = context.query[vm.Entity, vm.Entity]("cmd.implement") _
   private val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
+  private val tabCmdOverload = context.query[vm.Entity, vm.Entity, vm.Rule, Int]("cmd.overload") _
   private val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
   private val tabTick = context.query[Any, vm.Rule, Int]("tick") _
   private val tabName = context.query[vm.Entity, String]("name") _
@@ -167,10 +170,10 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
             return GameText(fmt(s"Invalid selection"), true)
         }
 
-        val result = executeCommandRule(command.command, Some(selected))
+        val result = executeCommandRule(selected.command, Some(selected.target))
 
         val keyword = if (!command.hadKeyword) {
-          tabKeyword(Some(selected), None).toStream.headOption.map(row => row._2 + " ").getOrElse("")
+          tabKeyword(Some(selected.target), None).toStream.headOption.map(row => row._2 + " ").getOrElse("")
         } else {
           ""
         }
@@ -185,26 +188,36 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
     }
 
     if (commandAndKeyword.isEmpty) return GameText(fmt("I don't know how to do that"), true)
-    val (cmd, matchedKeyword) = commandAndKeyword.get
+    val (matchedCommand, matchedKeyword) = commandAndKeyword.get
 
     val restOfLine = if (line.startsWith(matchedKeyword)) line.drop(matchedKeyword.length).trim else line.drop(parts(0).length).trim
 
-    val selectRules = tabCmdSelect(Some(cmd), None).map(_._2).toStream
+    val selectRules = tabCmdSelect(Some(matchedCommand), None).map(row => (row._2, matchedCommand)).toStream
     if (!selectRules.isEmpty) {
       // Do selection based command
 
-      // Gather all entities that match the selection of the command
-      val options = selectRules.flatMap(_.query()).map(_(0).get.asInstanceOf[vm.Entity]).toSet
+      // Gather all the implementations of the command
+      val alts = tabCmdImplement(None, Some(matchedCommand)).flatMap( { case (alt, _) =>
+        tabCmdSelect(Some(alt), None).map(row => (row._2, alt)).toStream
+      })
+      val impls = selectRules ++ alts
+
+      // Gather all entities accross all implementations that match the selection of the command
+      //val options = selectRules.flatMap(_.query()).map(row => (row(0).get.asInstanceOf[vm.Entity], impl))
+      val options = impls.flatMap({ case (rule, cmd) =>
+          rule.query().map(row => CmdTargetPair(row(0).get.asInstanceOf[vm.Entity], cmd))
+      })
 
       val filteredOptions = if (restOfLine.nonEmpty) {
         // Filter to entities with matching keywords
-        options.filter(e => {
-          val entityKeywords = tabKeyword(Some(e), None).map(_._2).toSeq
+        options.filter({ case CmdTargetPair(entity, cmd) =>
+          val entityKeywords = tabKeyword(Some(entity), None).map(_._2).toSeq
           val addKeywords = tabCmdAddKeyword(Some(cmd), None).flatMap(row => {
             val rule = row._2
-            rule.query(db.Pattern(Some(e), None)).map(_(1).get.asInstanceOf[String])
+            rule.query(db.Pattern(Some(entity), None)).map(_(1).get.asInstanceOf[String])
           }).toSeq
           val keywords = entityKeywords ++ addKeywords
+
           keywords.exists(_ == restOfLine)
         }).toVector
       } else {
@@ -212,9 +225,11 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
         options.toVector
       }
 
-      val discards = tabCmdDiscard(Some(cmd), None).map(_._2).toSeq
-      val finalOptions = filteredOptions.filterNot(opt => {
-        discards.exists(rule => rule.query(db.Pattern(Some(opt))).nonEmpty)
+      def getDiscards(cmd: vm.Entity): (vm.Entity, Seq[vm.Rule]) = cmd -> tabCmdDiscard(Some(cmd), None).map(_._2).toSeq
+      val discards = filteredOptions.map(_.command).toSet.map(getDiscards).toMap
+
+      val finalOptions = filteredOptions.filterNot({ case CmdTargetPair(entity, cmd) =>
+        discards(cmd).exists(rule => rule.query(db.Pattern(Some(entity))).nonEmpty)
       })
 
       if (finalOptions.size == 0) {
@@ -222,13 +237,14 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
         GameText(fmt(s"Found nothing relevant to ${matchedKeyword}"), true)
       } else if (finalOptions.size == 1 && restOfLine.nonEmpty) {
         // Single selected option -> execute command
-        executeCommandRule(cmd, Some(finalOptions.head))
+        val CmdTargetPair(entity, cmd) = finalOptions.head
+        executeCommandRule(cmd, Some(entity))
       } else {
         // Multiple or unselected options, show choices
-        commandUnderSelect = Some(DelayedCommand(cmd, finalOptions, line, restOfLine.nonEmpty))
+        commandUnderSelect = Some(DelayedCommand(finalOptions, line, restOfLine.nonEmpty))
 
         val names = for ((option, index) <- finalOptions.zipWithIndex) yield {
-          val name = tabName(Some(option), None).toStream.headOption.map(_._2).getOrElse("(unknown)")
+          val name = tabName(Some(option.target), None).toStream.headOption.map(_._2).getOrElse("(unknown)")
           s"${index + 1}. ${name}"
         }
 
@@ -238,7 +254,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
 
     } else {
       // Do non-selection command
-      executeCommandRule(cmd, None)
+      executeCommandRule(matchedCommand, None)
     }
 
   }
@@ -249,13 +265,13 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
 
     val pattern = entity.map(Some(_)).toArray[Option[Any]]
     val matches = rules.map(rule => (rule, rule.query(pattern).toVector)).toVector
-    for {
-      (rule, patterns) <- matches
-      pattern <- patterns
-    } {
-      anyMatch = true
-      rule.execute(pattern)
-      if (actions.hasFailed) return anyMatch
+    for ((rule, patterns) <- matches) {
+      actions.onceRequested = false
+      for (pattern <- patterns.iterator.takeWhile(_ => !actions.onceRequested)) {
+        anyMatch = true
+        rule.execute(pattern)
+        if (actions.hasFailed) return anyMatch
+      }
     }
 
     anyMatch
@@ -263,7 +279,11 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
 
   private def executeCommandRule(command: vm.Entity, entity: Option[vm.Entity]): GameText = {
     actions.hasFailed = false
-    val tryRules = tabCmdDo(Some(command), None, None).toVector.sortBy(row => row._3).map(_._2)
+    val dos = tabCmdDo(Some(command), None, None).toVector
+    val overloads = entity.map(entity => {
+      tabCmdOverload(Some(command), Some(entity), None, None).map(row => (row._1, row._3, row._4)).toVector
+    }).getOrElse(Vector[(vm.Entity, vm.Rule, Int)]())
+    val tryRules = (dos ++ overloads).sortBy(row => row._3).map(_._2)
     val text = actions.listenToPrint {
       executeRuleChain(tryRules, entity)
 
@@ -286,13 +306,13 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
       } while (somethingMatched)
     }
 
-    GameText(fmt(text.mkString("\n")))
+    GameText(fmt(text.mkString("")))
   }
 
 }
 
 class Game {
-  val gamePath = "Otaniemi_2167"
+  val gamePath = "New_Game"
 
   var instance = new GameInstance(gamePath)
   val inputs = new ArrayBuffer[String]()

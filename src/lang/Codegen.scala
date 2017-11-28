@@ -169,6 +169,7 @@ class Codegen(val context: vm.Context) {
         case Some(e: NamedDefine) => e.eval(this).getOrElse { error(t, s"Cyclical dependency in define '${t.prettyPrint}', defined at ${e.loc}", e) }
         case Some(NamedEntity(e)) => e
         case Some(NamedExternal(e)) => e
+        case Some(NamedTable(e)) => e
         case Some(something) => error(ast, s"'${t.prettyPrint}' is a ${something.what} instead of a literal value, see definition at ${something.loc}", something)
         case None => error(ast, s"Could not find literal value '${t.prettyPrint}'")
       }
@@ -197,9 +198,15 @@ class Codegen(val context: vm.Context) {
   private def evalRuleBlock(block: AstStmtBlock, binds: BindCollection, ns: Namespace): Vector[vm.Condition] = {
     def evalStmt(stmt: AstStmt): vm.Condition = stmt match {
       case t: AstQueryStmt =>
-        val table = getTable(t.operator, t.values.length, ns)
         val args = t.values.map(ex => binds.evalArg(this, ex, ns, true))
-        new vm.QueryCondition(table.name, args)
+        evalLiteralConstant(t.operator, ns) match {
+          case table: vm.Table =>
+            new vm.QueryCondition(table.name, args)
+          case rule: vm.Rule =>
+            new vm.RuleCondition(rule, args)
+          case something =>
+            error(t.operator, s"Not a valid queryable object: $something!")
+        }
 
       case t: AstNotStmt => new vm.NegationCondition(evalStmt(t.stmt))
 

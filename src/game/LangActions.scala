@@ -13,6 +13,7 @@ class LangActions(val context: vm.Context) {
   val templateRegex = raw"""\{([^}]*)\}""".r
 
   var hasFailed: Boolean = false
+  var onceRequested: Boolean = false
 
   var subGames: Map[String, GameInstance] = Map[String, GameInstance]()
   var gameInstance: GameInstance = null // Sorry :(
@@ -28,7 +29,7 @@ class LangActions(val context: vm.Context) {
     buffer
   }
 
-  def print(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {
+  def print(printNewline: Boolean)(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {
     val args = rule.mapArgs(mapping, binds)
     printTarget match {
       case Some(buffer) =>
@@ -50,7 +51,8 @@ class LangActions(val context: vm.Context) {
           }
           replace.replace("\\", "\\\\")
         })
-        buffer += msg
+        val finalMsg = if (printNewline) msg + "\n" else msg
+        buffer += finalMsg
 
       case None =>
     }
@@ -58,6 +60,10 @@ class LangActions(val context: vm.Context) {
 
   def fail(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {
     hasFailed = true
+  }
+
+  def once(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {
+    onceRequested = true
   }
 
   def subgamePush(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {

@@ -48,5 +48,9 @@ class Context(val shared: SharedContext = new SharedContext()) {
     query(table, db.Pattern(t1, t2, t3)).map(row => (row(0).asInstanceOf[T1], row(1).asInstanceOf[T2], row(2).asInstanceOf[T3]))
   }
 
+  def query[T1, T2, T3, T4](table: String)(t1: Option[T1], t2: Option[T2], t3: Option[T3], t4: Option[T4]): Iterator[(T1, T2, T3, T4)] = {
+    query(table, db.Pattern(t1, t2, t3, t4)).map(row => (row(0).asInstanceOf[T1], row(1).asInstanceOf[T2], row(2).asInstanceOf[T3], row(3).asInstanceOf[T4]))
+  }
+
 }
 

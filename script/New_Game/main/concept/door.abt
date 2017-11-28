@@ -1,0 +1,14 @@
+
+# Doors are places where players can "go", but they define their own behaviour
+table door self
+
+entity command.go-door {
+	cmd.implement command.go
+
+	cmd.select (Door) {
+		room *Player Room
+		room Door Room
+		door Door
+	}
+}
+

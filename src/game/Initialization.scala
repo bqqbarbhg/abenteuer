@@ -61,8 +61,10 @@ object Initialization {
     val context = new vm.Context(shared)
     val actions = new LangActions(context)
 
-    context.externals("print") = vm.ExternalAction(actions.print)
+    context.externals("print") = vm.ExternalAction(actions.print(true))
+    context.externals("print-no-newline") = vm.ExternalAction(actions.print(false))
     context.externals("fail") = vm.ExternalAction(actions.fail)
+    context.externals("once") = vm.ExternalAction(actions.once)
     context.externals("subgame.push") = vm.ExternalAction(actions.subgamePush)
     context.externals("subgame.pop") = vm.ExternalAction(actions.subgamePop)
 
@@ -82,6 +84,9 @@ object Initialization {
 
     val subGames = context.query[String, String]("subgame.game")(None, None)
     actions.subGames = subGames.map(row => (row._1, new GameInstance(path, row._2, shared))).toMap
+
+    val externalGames = context.query[String, String, String]("subgame.external-game")(None, None, None)
+    actions.subGames ++= externalGames.map(row => (row._1, new GameInstance(row._2, row._3))).toMap
 
     (context, actions)
   }

@@ -1,0 +1,93 @@
+
+# This file should only contain tables for interfacing with the engine!
+
+# Namespace for engine-level commands, the game understands this
+# and queries these tables.
+cmd {
+
+	# Keywords to use the command
+	table keyword cmd word {
+		# We don't want multiple commands with the same trigger
+		unique word 
+	}
+
+	# Functions to run when the commands are entered
+	table do cmd func order {
+		# Order in which command functions are tried, from low
+		# to high.
+		default order 0
+	}
+
+	# Functions to run when the commands are entered (for special objects)
+	table overload cmd obj func order {
+		default order 0
+	}
+
+	# Helpful description of a command
+	table help cmd desc { }
+
+	# For commands that need to select an argument
+	table select cmd func { }
+
+	# Filter the results of `cmd.select` (matching values are removed)
+	table discard cmd func { }
+
+	# Multiple implementations for commands
+	table implement cmd func { unique cmd }
+
+	# Add more keywords to things in `cmd.select`
+	table add-keyword cmd func { }
+
+	# A short abbrevation for the command with matching keyword
+	table abbrev cmd abbrev keyword { }
+
+} # cmd
+	
+# Print interpolated lines from commands
+external println "print"
+external print "print-no-newline"
+# Fail a command
+external fail "fail"
+# Do a thing only once
+external once "once"
+
+# Functions to run after every move
+table tick id func order {
+	default order 0
+}
+
+# Games inside the game
+subgame {
+	table game name module
+	table external-game name path module
+	table init name func order {
+		default order 0
+	}
+	table fini func order {
+		default order 0
+	}
+	external push "subgame.push"
+	external pop "subgame.pop"
+}
+
+game {
+	table title title
+	table welcome welcome
+}
+
+
+# Keywords to describe entities
+table keyword self kw { shared }
+
+# Name
+table name self name { shared; unique self }
+
+# Short description
+table desc self desc { shared; unique self }
+
+# Missing values (for interpolation)
+table string-missing tab str { unique tab }
+string-missing "name" "(no name)"
+string-missing "desc" ""
+
+

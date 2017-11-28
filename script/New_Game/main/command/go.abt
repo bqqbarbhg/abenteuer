@@ -1,0 +1,37 @@
+
+entity command.go {
+	cmd.keyword "go", "move"
+	cmd.abbrev "g" "go"
+	cmd.abbrev "cd" "go"
+	cmd.help "**go**: Go somewhere else"
+
+	cmd.select (Link) {
+		room *Player Room
+		link Room Link
+	}
+
+	cmd.select (Link) {
+		room *Player Room
+		directed-link Room Link
+	}
+
+	cmd.do (Link) {
+		room *Player Room
+	} -> {
+		! room *Player Room
+		room *Player Link
+	}
+
+	cmd.do (Link) {
+		room *Player Room
+		link-text Room Link Text
+	} -> {
+		println: Text
+		fail:
+	} 10
+
+	cmd.do (Link) -> {
+		println: "You walk to **{name:Link}**"
+	} 15
+}
+

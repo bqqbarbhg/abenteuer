@@ -1,0 +1,33 @@
+
+# A bed, going to it will result in moving to a dream
+table bed self dream
+table asleep self { unique self }
+
+entity command.go-to-bed {
+	cmd.implement command.go
+
+	cmd.select (Bed) {
+		room *Player Room
+		room Bed Room
+		bed Bed Dream
+	}
+
+	cmd.do (Bed) {
+		room *Player Room
+		bed Bed Dream
+	} -> {
+		! room *Player Room
+		room *Player Dream
+		asleep *Player
+		print: "You go to bed and immediately fall asleep. "
+		print: "The room fades into darkness and you feel weightless. "
+	}
+
+}
+
+cmd.do command.inspect (Thing) {
+	asleep Thing
+} -> {
+	print: "Sleeping tightly. "
+} 10
+

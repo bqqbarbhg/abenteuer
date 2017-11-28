@@ -1,0 +1,206 @@
+Tutorial {
+
+Cell {
+
+entity R {
+	keyword "your home", "home"
+	name "your home"
+	desc "Home sweet home"
+	flavor "A modest 8 square meter apartment, provided free-of-charge by the Aalto-Cola corporation. "
+}
+
+entity Poster {
+	keyword "poster"
+	room R
+	name "poster"
+	desc "A poster of the Mandelbrot Set"
+	look "A **poster** of the Mandelbrot Set on hanged the wall. "
+	flavor "Good old Z' = Z^2 + C, in color. "
+	item
+}
+
+entity Bed {
+	keyword "bed"
+	room R
+	name "bed"
+	desc "Standard issue student bed"
+	look "There is a **bed** next to the wall. "
+	flavor "Barely enough to fit one person, but it's functional. "
+	bed Dream.R
+}
+
+}
+
+Dream {
+
+entity R {
+	name "outer space"
+	desc "Somewhere in space"
+	flavor "The gleaming stars line the darkness that surrounds you. "
+}
+
+entity Key {
+	keyword "dream key", "key"
+	name "dream key"
+	desc "Key found in a dream"
+	look "A **key** floats among the stars. "
+	flavor "A key that suddenly manifested in your dream. "
+	flavor "It emits an eerie glow. "
+	room R
+	item
+}
+
+entity Earth {
+	room R
+	keyword "earth", "the earth"
+	name "earth"
+	desc "Pale blue dot"
+	look "In the distance you see the **earth**. Even though it's far away it feels easily reachable now. "
+}
+
+link R Earth
+
+cmd.overload command.go Earth (Earth) -> {
+	print: "You swim in the void to the **earth**. "
+	print: "As you fall through the atmosphere your senses regain. "
+	print: "You are awake. "
+	! asleep *Player
+	! room *Player *Earth
+	room *Player *Cell.R
+} 20
+
+}
+
+Hallway {
+
+entity R {
+	keyword "hallway"
+	name "hallway"
+	desc "Apartment block hall, floor 3"
+	flavor "There are countless apartments, just like yours. "
+	flavor "One of the doors is slightly open. "
+}
+
+entity Scribble {
+	room R
+	keyword "scribble"
+	name "scribble"
+	desc "Medium: pencil on wallpaper"
+	look "There is some **scribble** on the wall"
+	flavor "It says: \"The elevator is out of order, use the mergency exit. Code: **6502**\""
+}
+
+entity Knows-Code
+
+cmd.overload command.inspect Scribble (Scribble) {
+	! flag *Knows-Code
+} -> {
+	flag *Knows-Code
+	print: "\n\n**>>>** You make a note of the pass-code"
+} 20
+
+entity Elevator {
+	room R
+	door
+	keyword "elevator", "lift"
+	name "elevator"
+	desc "Elevator that you normally use"
+	flavor "It seems to have broken overnight, I think this is the third time this month. "
+}
+
+cmd.overload command.go-door Elevator (Elevator) -> {
+	println: "It doesn't seem to work..."
+}
+
+entity Emergency-Exit {
+	room R
+	door
+	keyword "emergency exit", "exit", "emergency", "ground floor"
+	name "emergency exit"
+	desc "Exit that is to be used when the situation needs it"
+	flavor "For some mysterious reason they have a pass-code that is required for the door from the inside. I wonder who came up with that... "
+}
+
+
+cmd.overload command.go-door Emergency-Exit (Exit) {
+	! flag Knows-Code
+} -> {
+	println: "I don't know the pass-code..."
+}
+
+cmd.overload command.go-door Emergency-Exit (Exit) {
+	room *Player Room
+	flag Knows-Code
+} -> {
+	print: "You input the passcode **6502** and go through the exit. "
+	print: "It leads to the **ground floor**."
+	! room *Player Room
+	room *Player *Ground-Floor.R
+}
+
+}
+
+Ground-Floor {
+
+	table local-umbrella self
+
+	entity R {
+		keyword "ground floor"
+		name "ground floor"
+		desc "Communal living space in the bottom floor"
+		flavor "Usually full of life, but for some reason there is nobody here today. "
+	}
+
+	cmd.do command.look () {
+		room *Player *R
+		local-umbrella U
+		! taken U
+	} -> {
+		once:
+		print: "There is a basket with some communal **umbrellas**, free to take. "
+	} 3
+
+
+	entity Umbrella-Transparent {
+		item; local-umbrella; umbrella; room R
+		keyword "umbrella", "transparent umbrella", "black umbrella", "textured umbrella"
+		name "umbrella (transparent)"
+		desc "Umbrella which is completely transparent"
+	}
+
+	entity Umbrella-Black {
+		item; local-umbrella; umbrella; room R
+		keyword "umbrella", "transparent umbrella", "black umbrella", "textured umbrella"
+		name "umbrella (black)"
+		desc "Umbrella which is completely black"
+	}
+
+	entity Umbrella-Textured {
+		item; local-umbrella; umbrella; room R
+		keyword "umbrella", "transparent umbrella", "black umbrella", "textured umbrella"
+		name "umbrella (textured)"
+		desc "Umbrella with a calming flower texturing"
+	}
+
+}
+
+Outside {
+
+	entity R {
+		keyword "outside", "exit", "door"
+		name "outside"
+		desc "It's raining"
+		flavor "Usually full of life, but for some reason there is nobody here today. "
+		raining
+	}
+
+
+}
+
+link Cell.R Hallway.R
+directed-link Ground-Floor.R Hallway.R
+link Ground-Floor.R Outside.R
+link-text Ground-Floor.R Outside.R "You walk **outside**"
+
+}
+

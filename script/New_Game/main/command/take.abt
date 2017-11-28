@@ -1,0 +1,30 @@
+
+entity command.take {
+	cmd.keyword "take", "pick up", "lift", "get"
+	cmd.help "**take**: Pick up objects"
+	cmd.abbrev "t" "take"
+
+	cmd.select (Thing) {
+		room *Player Room
+		room Thing Room
+		item Thing
+		! has Anyone Thing
+	}
+
+	cmd.do (Thing) {
+		room Thing Room
+	} -> {
+		has *Player Thing
+		! room Thing Room
+		print: "Picked up **{name:Thing}**"
+	}
+
+	cmd.do (Thing) {
+		! taken Thing
+	} -> {
+		taken Thing
+	}
+}
+
+
+

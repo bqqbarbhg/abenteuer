@@ -16,10 +16,35 @@ Vare {
 	entity R {
 		keyword "vare"
 		name "vare"
-		desc "The main building work was completed in 2057, but large areas are still under construction"
+		desc "The main building work was completed in 2053, but large areas are still under construction"
+		flavor "The power seems to be out of the whole building, but ambient skylight fills the room"
 	}
 
 }
+
+Downstairs {
+
+	entity R {
+		keyword "downstairs"
+		name "downstairs"
+		desc "Stairway to the metro level, but there is no light"
+	}
+
+}
+
+Corridor {
+
+	entity R {
+		keyword "corridor"
+		name "corridor"
+		desc "Corridor that leads to the metro"
+	}
+
+}
+
+link Start.Yard.R Path.R
+link Vare.R Downstairs.R
+link Downstairs.R Corridor.R
 
 tick "lost-in-path" () {
 	room *Player *Path.R
@@ -32,13 +57,12 @@ tick "lost-in-path" () {
 	room *Player *Vare.R
 }
 
-link Start.Yard.R Path.R
 
 table has-won mark
 entity WinCondition
 
 tick WinCondition () {
-	! has-won 1
+	has-won 1
 	room *Player *Vare.R
 } -> {
 	has-won 1

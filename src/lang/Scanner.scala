@@ -24,7 +24,7 @@ case class TokenString(value: String) extends Token {
   override def toString: String = s"""TokenString("${value.escape}")"""
 }
 case class TokenEnd() extends Token
-case class TokenNewline() extends Token
+case class TokenNewline(real: Boolean) extends Token
 case class TokenOpenBlock() extends Token
 case class TokenCloseBlock() extends Token
 case class TokenOpenParen() extends Token
@@ -60,7 +60,7 @@ object Scanner {
     (m: Match) => new TokenString(m.group(2).unescape))
 
   val tok_newline = (raw"""[\n;]""".r,
-    (m: Match) => new TokenNewline)
+    (m: Match) => new TokenNewline(m.group(0) == "\n"))
 
   val tok_operator = (s"[{}(),.!*:]|->".r,
     (m: Match) => m.group(0) match {
@@ -134,9 +134,11 @@ class Scanner(val source: String, val filename: String) {
 
           charOffset += mat.end
           token match {
-            case TokenNewline() =>
-              lineNumber += 1
-              previousLinebreakOffset = charOffset
+            case TokenNewline(real) =>
+              if (real) {
+                lineNumber += 1
+                previousLinebreakOffset = charOffset
+              }
             case _ =>
           }
 

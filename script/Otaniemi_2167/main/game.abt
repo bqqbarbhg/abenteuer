@@ -16,3 +16,20 @@ To examine your surroundings input:
 subgame.game "talk" "talk"
 subgame.game "computer" "computer"
 
+
+subgame.init "" () {
+	game.welcome Welcome
+} -> {
+	print: "Second prototype game."
+	print: "Sorry for the terrible edgyness!\n\n"
+	print: Welcome
+}
+
+entity is-subgame
+
+subgame.init "" () {
+	! flag *is-subgame
+} -> {
+	flag *is-subgame
+}
+
