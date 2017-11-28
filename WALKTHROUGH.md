@@ -67,4 +67,11 @@ open door
 go outside
 ```
 
+#### Yard
+
+Just follow the path
+
+```
+go path
+```
 
