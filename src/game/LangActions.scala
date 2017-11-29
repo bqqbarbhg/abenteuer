@@ -21,6 +21,8 @@ class LangActions(val context: vm.Context) {
   var activeSubGame: Option[GameInstance] = None
   var wantsToPopSubGame: Boolean = false
 
+  var autoCommand: Option[String] = None
+
   def listenToPrint(block: => Unit): ArrayBuffer[String] = {
     val buffer = new ArrayBuffer[String]()
     printTarget = Some(buffer)
@@ -79,4 +81,8 @@ class LangActions(val context: vm.Context) {
     wantsToPopSubGame = true
   }
 
+  def doAutoCommand(rule: vm.Rule, binds: db.Pattern, mapping: Vector[Int]): Unit = {
+    val args = rule.mapArgs(mapping, binds)
+    autoCommand = Some(args(0).get.asInstanceOf[String])
+  }
 }

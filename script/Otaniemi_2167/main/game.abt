@@ -33,3 +33,7 @@ subgame.init "" () {
 	flag *is-subgame
 }
 
+subgame.fini () -> {
+	print: "Thank you for playing Otaniemi 2167!"
+}
+

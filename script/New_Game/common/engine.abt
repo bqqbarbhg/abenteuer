@@ -53,6 +53,8 @@ external print "print-no-newline"
 external fail "fail"
 # Do a thing only once
 external once "once"
+# Force a command to be executed
+external auto-command "auto-command"
 
 # Functions to run after every move
 table tick id func order {

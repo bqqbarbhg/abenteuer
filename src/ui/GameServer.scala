@@ -72,13 +72,15 @@ object GameServer extends App {
 
     val spans = result.spans.map(spanToJson).mkString(", ")
     val overridePrompt = result.overridePrompt.map(a => "\"" + a.escape + "\"").getOrElse("null")
+    val autoCommand = result.autoCommand.map(a => "\"" + a.escape + "\"").getOrElse("null")
 
     val body =
       s"""
          |{
          |  "spans": [$spans],
          |  "ephemeral": ${result.ephemeral},
-         |  "overridePrompt": ${overridePrompt}
+         |  "overridePrompt": $overridePrompt,
+         |  "autoCommand": $autoCommand
          |}
        """.stripMargin
 

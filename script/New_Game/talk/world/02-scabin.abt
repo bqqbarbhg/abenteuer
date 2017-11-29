@@ -1,9 +1,170 @@
 
 Scabin.Basement.Head {
 
-subgame.init "Scabin.Basement.Head" () -> {
-	println: "Hello world!"
-}
+	subgame.init "Scabin.Basement.Head" () -> {
+		active-state *Q-1
+		active-actor "ai"
+	}
+
+	subgame.init "Scabin.Basement.Head" () {
+		shared-flag *Head-Reset
+	} -> {
+		! shared-flag *Head-Reset
+		! flag *Offended
+		! flag *Happy
+		! flag *Remembers-Unlocked-Door
+		println: "**ai**: Loading memory banks (last saved 5 days ago)"
+	} 2
+
+	define is-offended () {
+		! shared-flag *Head-Reset
+		flag *Offended
+	}
+
+	subgame.init "Scabin.Basement.Head" () {
+		is-offended
+	} -> {
+		! active-state _
+		active-state *Still-Fail
+		println: ""
+		println: "**ai**: Why must you waste my time?"
+	} 2
+
+	subgame.init "Scabin.Basement.Head" () {
+		! is-offended
+		! flag Happy
+	} -> {
+		println: ""
+		println: "**ai**: So, who is the best?"
+	} 2
+
+	subgame.init "Scabin.Basement.Head" () {
+		! shared-flag *Head-Reset
+		flag Happy
+	} -> {
+		! active-state _
+		active-state *Talking
+		println: ""
+		println: "**ai**: I remember you, you're alright."
+	} 3
+
+	define Offend () -> {
+		! flag *Offended
+		flag *Offended
+		! active-state _
+		active-state *Fail
+	}
+
+	entity Offended
+	entity Happy
+	entity Remembers-Unlocked-Door
+
+	entity Q-1
+	entity Q-2
+	entity Q-3
+	entity Talking
+	entity Fail
+	entity Still-Fail
+
+	entity Retry {
+		reply Fail
+		name "Can I try again?"
+		line "Of course not! I will never forget this."
+		end-talk
+	}
+
+	entity Still-Retry {
+		reply Still-Fail
+		name "Are you seriously still mad at me?"
+		line "As I said, I will never forget what you have done."
+		end-talk
+	}
+
+	entity A-1-1 {
+		name "Roger Waters"
+		reply Q-1
+		line "That dude from Pink Floyd, no way!"
+		line "Of course the right answer is **Phil Elverum**"
+		on-say Offend
+	}
+
+	entity A-1-2 {
+		name "Phil Elverum"
+		reply Q-1
+		line "Hmmmm, seems like you actually might know something."
+		line "How, about what's the hottest Javascript framework around now?"
+		goto Q-2
+	}
+
+	entity A-2-1 {
+		name "React"
+		reply Q-2
+		line "Hah, that thing is older than me!"
+		line "Of course the right answer is **Element.js**"
+		on-say Offend
+	}
+
+	entity A-2-2 {
+		name "Element.js"
+		reply Q-2
+		line "Yes, that is actually correct..."
+		line "Alrighty then, what number am I thinking about?"
+		goto Q-3
+	}
+
+	entity A-3-1 {
+		reply Q-3
+		name "1"
+		line "Hah, that thing is older than me!"
+		line "Of course the right answer is **65535**"
+		on-say Offend
+	}
+
+	entity A-3-2 {
+		reply Q-3
+		name "65535"
+		line "Yes! 0xFFFF for short."
+		line "I guess you're alright then, what do you want?"
+		on-say () -> {
+			! flag *Happy
+			flag *Happy
+		}
+		goto Talking
+	}
+
+
+	entity Remove-Door-Lock {
+		reply Talking
+		name "Can you unlock the door upstairs?"
+
+		on-say () {
+			shared-flag *Door-Unlocked
+			flag *Remembers-Unlocked-Door
+		} -> {
+			println: "**ai**: I did that already"
+		}
+
+		on-say () {
+			! shared-flag *Door-Unlocked
+		} -> {
+			println: "**ai**: Sure"
+			shared-flag *Door-Unlocked
+			! flag *Remembers-Unlocked-Door
+			flag *Remembers-Unlocked-Door
+		}
+
+		on-say () {
+			shared-flag *Door-Unlocked
+			! flag *Remembers-Unlocked-Door
+		} -> {
+			println: "**ai**: Sure..."
+			println: "**ai**: WAIT WHAT, it's unlocked already and I don't remember doing that!"
+			println: "**ai**: This is very bad!"
+		}
+
+
+	}
+
 
 }
 

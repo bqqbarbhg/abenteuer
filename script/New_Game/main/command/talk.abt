@@ -13,6 +13,7 @@ entity command.talk {
 	} -> {
 		println: "Talking to **{name:Actor}**"
 		subgame.push: "talk" Entry
+		auto-command: "say"
 	}
 
 }

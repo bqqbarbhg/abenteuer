@@ -1,5 +1,5 @@
 
-entity command.bye {
+entity command.stop {
 	cmd.keyword "bye", "stop", "leave", "go", "done", "exit"
 	cmd.help "**bye**: Stop talking"
 

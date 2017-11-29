@@ -15,6 +15,7 @@ abstract class NamedValue {
   def what: String
 }
 
+case object NamedPlaceholder extends NamedValue { override def what: String = "internal compiler placeholder" }
 case class NamedTable(val table: vm.Table) extends NamedValue { override def what: String = "table" }
 case class NamedEntity(val entity: vm.Entity) extends NamedValue { override def what: String = "entity" }
 case class NamedNamespace(val namespace: Namespace) extends NamedValue { override def what: String = "namespace" }
@@ -39,6 +40,10 @@ case class NamedDefine(val value: AstEx, val ns: Namespace) extends NamedValue {
 }
 
 class Namespace(val parent: Option[Namespace], val name: String) {
+  if (name == "Head" && (!parent.isDefined || parent.get.fullName != "Scabin.Basement")) {
+    println("WHYYYY")
+  }
+
   val fullName: String = parent.map(n => n.namespaced(name)).getOrElse("")
 
   def namespaced(name: String) = if (fullName.nonEmpty) fullName + "." + name else name
@@ -79,6 +84,7 @@ class Namespace(val parent: Option[Namespace], val name: String) {
     if (index + 1 == name.path.size) {
       val nameStr = name.path(index).id
       names.get(nameStr) match {
+        case Some(`NamedPlaceholder`) => names(nameStr) = value
         case Some(prev) => throw new CompileError(name.representingToken.location, s"'$nameStr' is already defined as a ${prev.what} at '${prev.loc}'")
         case None => names(nameStr) = value
       }
@@ -369,9 +375,21 @@ class Codegen(val context: vm.Context) {
       val ns2 = ns.get(namespace.name, false) match {
         case Some(NamedNamespace(ns2)) => ns2
         case _ =>
-          val ns2 = new Namespace(Some(ns), namespace.name.path.last.id)
-          ns.create(namespace.name, NamedNamespace(ns2))
-          ns2
+          if (namespace.name.path.length > 1) {
+            val parentName = AstExName(namespace.name.path.dropRight(1))
+            ns.create(namespace.name, NamedPlaceholder)
+            val parent = ns.get(parentName, false) match {
+              case Some(NamedNamespace(ns)) => ns
+              case _ => error(namespace, s"Internal error: Did not find freshly created parent namespace")
+            }
+            val ns2 = new Namespace(Some(parent), namespace.name.path.last.id)
+            ns.set(namespace.name, NamedNamespace(ns2))
+            ns2
+          } else {
+            val ns2 = new Namespace(Some(ns), namespace.name.path.last.id)
+            ns.create(namespace.name, NamedNamespace(ns2))
+            ns2
+          }
       }
       doNamespaces(namespace.block, ns2)
     case astEntity: AstEntity =>

@@ -33,7 +33,7 @@ cmd.debug "scabin" () {
 	println: "Warping player to **scabin entrance**"
 	println: "Spawning **umbrella (debug)**"
 	! room *Player _
-	room *Player *Scabin.Entrance.R
+	room *Player *Scabin.Basement.R
 	room *Debug-Umbrella *Scabin.Entrance.R 
 }
 

@@ -1,0 +1,6 @@
+
+table shared-flag flag { shared; unique flag }
+
+define Scabin.Basement.Head-Reset "Scabin.Basement.Head-Reset"
+define Scabin.Basement.Door-Unlocked "Scabin.Basement.Door-Unlocked"
+

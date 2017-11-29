@@ -1,0 +1,14 @@
+
+entity Bye {
+	global-reply
+	select-order 1000
+
+	name "Bye."
+
+	on-say () -> {
+		println: "You end the conversation."
+		subgame.pop:
+		fail:
+	}
+}
+

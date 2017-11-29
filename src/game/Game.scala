@@ -5,7 +5,14 @@ import ui.TextSpan
 import scala.collection.mutable.ArrayBuffer
 import scala.util.{Failure, Success, Try}
 
-case class GameText(spans: Vector[TextSpan], ephemeral: Boolean = false, overridePrompt: Option[String] = None)
+/**
+  * Result of interacting with the game
+  * @param spans Styled text content to display to the user
+  * @param ephemeral If this is true this content can be replaced with the next result
+  * @param overridePrompt Possible replacement for what the user entered
+  * @param autoCommand The client _should_ behave like the user input this command right after the last one
+  */
+case class GameText(spans: Vector[TextSpan], ephemeral: Boolean = false, overridePrompt: Option[String] = None, autoCommand: Option[String] = None)
 
 case class CmdTargetPair(target: vm.Entity, command: vm.Entity)
 case class DelayedCommand(options: Vector[CmdTargetPair], previousLine: String, hadKeyword: Boolean)
@@ -195,7 +202,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
           ""
         }
 
-        return GameText(result.spans, result.ephemeral, Some(s"${command.previousLine} $keyword ($number)"))
+        return GameText(result.spans, result.ephemeral, Some(s"${command.previousLine} $keyword ($number)"), result.autoCommand)
       case None =>
         commandUnderSelect = None
     }
@@ -301,11 +308,14 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
 
   private def executeCommandRule(command: vm.Entity, entity: Option[vm.Entity]): GameText = {
     actions.hasFailed = false
+    actions.autoCommand = None
+
     val dos = tabCmdDo(Some(command), None, None).toVector
     val overloads = entity.map(entity => {
       tabCmdOverload(Some(command), Some(entity), None, None).map(row => (row._1, row._3, row._4)).toVector
     }).getOrElse(Vector[(vm.Entity, vm.Rule, Int)]())
     val tryRules = (dos ++ overloads).sortBy(row => row._3).map(_._2)
+
     val text = actions.listenToPrint {
       executeRuleChain(tryRules, entity)
 
@@ -328,7 +338,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
       } while (somethingMatched)
     }
 
-    GameText(fmt(text.mkString("")))
+    GameText(fmt(text.mkString("")), autoCommand = actions.autoCommand)
   }
 
 }

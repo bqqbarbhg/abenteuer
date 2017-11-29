@@ -1,0 +1,10 @@
+
+table global-reply self
+table reply self state
+table goto self state
+table on-say self func
+table active-state self
+table active-actor self
+table line self text
+table end-talk self
+

@@ -5,20 +5,8 @@ entity help {
 	cmd.help "**help**: Help for using the talking interface"
 
 	cmd.do() -> {
-		println: "You are currently in talking mode, it features different commands than in the world. "
-		println: ""
+		println: "You are currently in talking mode, the only command is **say**. Type it and select what you want to say."
 	} 0
 
-	cmd.do () {
-		cmd.help Command Help
-	} -> {
-		println: Help
-	} 5
-
-	cmd.do() -> {
-		println: ""
-		println: "Hint: To get a list of all what you can say at any moment type:"
-		println: "**> say**"
-	} 10
 }
 

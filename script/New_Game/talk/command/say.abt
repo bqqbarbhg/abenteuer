@@ -1,0 +1,64 @@
+
+entity command.say {
+	cmd.keyword "say"
+
+	cmd.help "**say**: Say something"
+
+	cmd.select (Line) {
+		global-reply Line
+	}
+
+	cmd.select (Line) {
+		active-state State
+		reply Line State
+	}
+
+	cmd.do (Line) {
+		goto Line New-State
+	} -> {
+		! active-state _
+		active-state New-State
+	}
+
+	cmd.do (Line) -> {
+		println: ""
+	} 1
+
+	cmd.do (Line) {
+		name Line Name
+	} -> {
+		println: "**you**: {Name}"
+	} 1
+
+	cmd.do (Line) -> {
+		println: ""
+	} 2
+
+	cmd.do (Line) {
+		active-actor Actor
+		line Line Response
+	} -> {
+		println: "**{Actor}**: {Response}"
+	} 3
+
+	cmd.do (Line) {
+		on-say Line Func
+	} -> {
+		&Func
+	} 4
+
+	cmd.do (Line) {
+		active-actor Actor
+		end-talk Line
+	} -> {
+		println: ""
+		println: "**{Actor}** stops talking with you"
+		subgame.pop:
+		fail:
+	} 9
+
+	cmd.do (Line) -> {
+		auto-command: "say"
+	} 10
+}
+

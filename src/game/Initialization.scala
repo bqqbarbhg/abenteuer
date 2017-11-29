@@ -67,6 +67,7 @@ object Initialization {
     context.externals("once") = vm.ExternalAction(actions.once)
     context.externals("subgame.push") = vm.ExternalAction(actions.subgamePush)
     context.externals("subgame.pop") = vm.ExternalAction(actions.subgamePop)
+    context.externals("auto-command") = vm.ExternalAction(actions.doAutoCommand)
 
     // -- Compile the script sources
     try {

@@ -1,0 +1,6 @@
+
+subgame.init "" () -> {
+	! active-state _
+	! active-actor _
+} -10
+

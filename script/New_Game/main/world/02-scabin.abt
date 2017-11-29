@@ -32,6 +32,7 @@ entity Basement-Door {
 
 cmd.overload command.go-door Basement-Door (Door) {
 	has *Player Item
+	! shared-flag *Basement.Door-Unlocked
 } -> {
 	println: "You try to walk towards the door but it doesn't open for you. "
 	fail:
@@ -84,6 +85,9 @@ Basement {
 		print: "You flick the switch on the control panel. "
 		print: "The fans start blowing and a huge **holographic head** is manifested on top of it. "
 		room *Head *R
+
+		! shared-flag *Head-Reset
+		shared-flag *Head-Reset
 	}
 
 	toggle.off Projector (Projector) -> {
@@ -139,7 +143,7 @@ Prototype-Room {
 		room R
 		keyword "test", "test computer", "computer"
 		name "computer (test)"
-		look "One of the computers is labeled **test**"
+		look "One of the computers is labeled **test**. "
 		flavor "This computer must be at least hundreds of years old. "
 		flavor "It has some sort of sticker on top of the monitor saying \"test prototype\". "
 	}
@@ -149,7 +153,7 @@ Prototype-Room {
 		room R
 		keyword "dystopian", "dystopian computer", "computer"
 		name "computer (dystopian)"
-		look "One of the computers is labeled **dystopian**"
+		look "One of the computers is labeled **dystopian**. "
 		flavor "This computer must be at least hundreds of years old. "
 		flavor "It has some sort of sticker on top of the monitor saying \"dystopian prototype\". "
 	}
