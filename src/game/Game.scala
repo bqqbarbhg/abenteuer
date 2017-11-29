@@ -24,6 +24,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
   private val tabCmdDo = context.query[vm.Entity, vm.Rule, Int]("cmd.do") _
   private val tabCmdOverload = context.query[vm.Entity, vm.Entity, vm.Rule, Int]("cmd.overload") _
   private val tabCmdAbbrev = context.query[vm.Entity, String, String]("cmd.abbrev") _
+  private val tabCmdDebug = context.query[String, vm.Rule, Int]("cmd.debug") _
   private val tabTick = context.query[Any, vm.Rule, Int]("tick") _
   private val tabName = context.query[vm.Entity, String]("name") _
   private val tabKeyword = context.query[vm.Entity, String]("keyword") _
@@ -117,7 +118,8 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
           GameText(fmt(msg))
 
         case "help" =>
-          val msg = """Note: This is the debug command help, for in-game help use only:
+          val msg =
+            """Note: This is the debug command help, for in-game help use only:
             |  > help
             |
             |  **/hello** - Display startup message
@@ -126,6 +128,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
             |  **/reload** - Reload the game
             |  **/replay** - Reload the game and replay all the input
             |  **/list** - Dump table contents
+            |  **/debug** - Run debug commands (or list if no argument)
             |
             |""".stripMargin
           GameText(fmt(msg))
@@ -136,6 +139,19 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
               val result = table.query(Array.fill[Option[Any]](table.arity)(None)).map(_.mkString(" ")).mkString("\n")
               GameText(fmt(result), false)
             case None => return GameText(fmt("Expected table name"), true)
+          }
+
+        case "debug" =>
+          parts.lift(1) match {
+            case Some(cmd) =>
+              val rules = tabCmdDebug(Some(cmd), None, None).toSeq.sortBy(row => row._3).map(_._2).toVector
+              val text = actions.listenToPrint {
+                executeRuleChain(rules, None)
+              }
+              GameText(fmt(text.mkString("")))
+            case None =>
+              val debugs = tabCmdDebug(None, None, None).map(row => s"**${row._1}**").toSet.mkString(", ")
+              GameText(fmt(s"Available debug commands: $debugs"))
           }
 
         case other => GameText(fmt(s"Unknown command: **${other}**"), true)

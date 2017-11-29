@@ -41,6 +41,9 @@ cmd {
 	# A short abbrevation for the command with matching keyword
 	table abbrev cmd abbrev keyword { }
 
+	# Debug commands
+	table debug name func order { default order 0 }
+
 } # cmd
 	
 # Print interpolated lines from commands

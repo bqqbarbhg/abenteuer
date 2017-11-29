@@ -1,0 +1,20 @@
+
+cmd.debug "room" () {
+	room *Player Room
+	room Thing Room
+} -> {
+	print: "**{Thing}** ({name:Thing}), "
+}
+
+cmd.debug "inv" () {
+	has *Player Thing
+} -> {
+	print: "**{Thing}** ({name:Thing}), "
+}
+
+cmd.debug "flag" () {
+	flag Flag
+} -> {
+	print: "**{Flag}**, "
+}
+

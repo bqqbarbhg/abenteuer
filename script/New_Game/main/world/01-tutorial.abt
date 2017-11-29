@@ -25,7 +25,9 @@ entity Bed {
 	name "bed"
 	desc "Standard issue student bed"
 	look "There is a **bed** next to the wall. "
+
 	flavor "Barely enough to fit one person, but it's functional. "
+
 	bed Dream.R
 }
 
