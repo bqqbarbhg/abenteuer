@@ -1,0 +1,168 @@
+
+Scabin {
+
+Entrance {
+
+entity R {
+	keyword "scabin entrance", "entrance", "scabin", "cabin"
+	name "scabin entrance"
+	desc "Server cabin, home of the AI"
+	flavor "This is where the AI was contained to after it tried to spread outside of its enclosure. "
+}
+
+entity Sign {
+	room R
+	keyword "sign"
+	name "sign"
+	desc "A sign that demands you to drop your items if you wish to proceed"
+	look "On the wall hangs a **sign**: \"No items beyond this point!\". "
+	flavor "It features intimidating warning triangles surrounding the text: "
+	flavor "\"No items beyond this point!\". "
+}
+
+entity Basement-Door {
+	room R
+	keyword "basement door", "door", "basement"
+	name "basement door"
+	desc "Door that leads to the basement where the AI resides"
+	look "The **basement door** that leads to the AI containment area. "
+	flavor "A well secured door that has a camera of some sorts mounted on top of it. "
+	door
+}
+
+cmd.overload command.go-door Basement-Door (Door) {
+	has *Player Item
+} -> {
+	println: "You try to walk towards the door but it doesn't open for you. "
+	fail:
+} -10
+
+cmd.overload command.go-door Basement-Door (Door) {
+	room *Player Room
+} -> {
+	! room *Player Room
+	room *Player *Basement.R
+	println: "The heavy door clunks open and lets you proceed downstairs to **scabin basement**"
+}
+
+}
+
+Basement {
+
+	entity R {
+		keyword "basement"
+		name "scabin basement"
+		desc "AI containment room"
+		flavor "Dim claustrophobic chamber. "
+		flavor "All the surfaces are made out of plain concrete. "
+	}
+
+	entity Projector {
+		usable; toggle.togglable
+		room R
+
+		keyword "projector", "device", "button", "switch"
+		name "projector"
+		desc "Powerful computer equipped with a holographic projector"
+		look "In the middle of the floor, there is a **projector**. "
+
+		flavor "It features a control panel with a few buttons, but mainly one for turning it on and off. "
+		flavor "Manufactured by Nya Elektriska. "
+	}
+
+	entity Head {
+		keyword "holographic head", "head", "ai"
+		name "holographic head"
+		desc "Massive AI head floating above the projector"
+		look "In the air floats a disembodied **holographic head** that belongs to the AI. "
+		flavor "The head almost fills the whole room. "
+		flavor "It looks like an egg-shaped bald male head with a pointy mustache as a tribute to its creator. "
+		talks "Scabin.Basement.Head"
+	}
+
+	toggle.on Projector (Projector) -> {
+		print: "You flick the switch on the control panel. "
+		print: "The fans start blowing and a huge **holographic head** is manifested on top of it. "
+		room *Head *R
+	}
+
+	toggle.off Projector (Projector) -> {
+		print: "You close the projector. "
+		print: "The **holographic head** fades out. "
+		! room *Head *R
+	}
+
+	cmd.overload command.go Entrance.R (Link) {
+		room *Player *R
+		room *Head *R
+	} -> {
+		println: "**holographic head**: You cannot leave from here before you turn me off!"
+		fail:
+	} -20
+
+	entity Door {
+		door
+		room R
+		keyword "locked door", "door", "locked", "computer", "computer room"
+		name "locked door"
+		desc "Mysterious door on the wall"
+		look "There is a **locked door** without any signage. "
+		flavor "It's locked. "
+	}
+
+	cmd.overload command.go-door Door (Door) {
+		! has *Player *Tutorial.Dream.Key
+	} -> {
+		println: "It requires some kind of key to open."
+		fail:
+	} -10
+
+	cmd.overload command.go-door Door (Door) -> {
+		print: "You open the door with your **dream key**. "
+		println: "It leads you to **computer room**. "
+		! room *Player _
+		room *Player *Prototype-Room.R
+	}
+
+}
+
+Prototype-Room {
+
+	entity R {
+		keyword "computer room"
+		name "computer room"
+		flavor "There are some computers in the room. "
+	}
+
+	entity Computer-Test {
+		usable
+		room R
+		keyword "test", "test computer", "computer"
+		name "computer (test)"
+		look "One of the computers is labeled **test**"
+		flavor "This computer must be at least hundreds of years old. "
+		flavor "It has some sort of sticker on top of the monitor saying \"test prototype\". "
+	}
+
+	entity Computer-Dystopian {
+		usable
+		room R
+		keyword "dystopian", "dystopian computer", "computer"
+		name "computer (dystopian)"
+		look "One of the computers is labeled **dystopian**"
+		flavor "This computer must be at least hundreds of years old. "
+		flavor "It has some sort of sticker on top of the monitor saying \"dystopian prototype\". "
+	}
+
+	cmd.overload command.use Computer-Dystopian (Computer) -> {
+		subgame.push: "proto_otaniemi_2167" ""
+	}
+
+}
+
+link Entrance.R Tutorial.Outside.R
+directed-link Basement.R Entrance.R
+directed-link Prototype-Room.R Basement.R
+
+}
+

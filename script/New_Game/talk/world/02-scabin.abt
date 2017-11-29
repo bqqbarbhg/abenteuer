@@ -1,0 +1,9 @@
+
+Scabin.Basement.Head {
+
+subgame.init "Scabin.Basement.Head" () -> {
+	println: "Hello world!"
+}
+
+}
+

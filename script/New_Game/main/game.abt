@@ -8,4 +8,5 @@ At any point type **help** to get a list of commands.
 "
 
 subgame.external-game "proto_otaniemi_2167" "Otaniemi_2167" "main"
+subgame.game "talk" "talk"
 

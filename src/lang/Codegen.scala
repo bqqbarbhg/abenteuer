@@ -120,11 +120,13 @@ class BindCollection(val args: Vector[TokenId]) {
       val name = t.path.head.id
       binds.indexOf(name) match {
         case -1 =>
-          if (!allowCreate) cg.error(t, s"Lambda post-block may not introduce new binds, but '${name}' is not defined!")
+          if (!allowCreate) cg.error(t, s"A new bind '${name}' cannot be defined here!")
           binds += name
           binds.length - 1
         case valid => valid
       }
+    case w: AstExWildcard =>
+      Int.MinValue
     case ex =>
       val value = cg.evalLiteralConstant(ex, ns)
       val ix = constants.indexOf(value) match {
@@ -208,6 +210,11 @@ class Codegen(val context: vm.Context) {
             error(t.operator, s"Not a valid queryable object: $something!")
         }
 
+      case t: AstIndirectQueryStmt =>
+        val args = t.query.values.map(ex => binds.evalArg(this, ex, ns, true))
+        val bind = binds.evalArg(this, t.query.operator, ns, false)
+        new vm.IndirectCondition(bind, args)
+
       case t: AstNotStmt => new vm.NegationCondition(evalStmt(t.stmt))
 
       case other => error(other, "Unexpected statement in query block")
@@ -222,6 +229,11 @@ class Codegen(val context: vm.Context) {
         val table = getTable(t.operator, t.values.length, ns)
         val args = t.values.map(ex => binds.evalArg(this, ex, ns, false))
         new vm.TableUpdateAction(table, args)
+
+      case t: AstIndirectQueryStmt =>
+        val bind = binds.evalArg(this, t.query.operator, ns, false)
+        val args = t.query.values.map(ex => binds.evalArg(this, ex, ns, false))
+        new vm.IndirectAction(bind, args)
 
       case t: AstNotStmt =>
         val query = t.stmt match {

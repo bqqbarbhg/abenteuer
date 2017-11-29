@@ -1,0 +1,19 @@
+
+entity command.talk {
+	cmd.keyword "talk", "speak", "say", "ask"
+	cmd.help "**talk**: Talk to someone (or something)"
+
+	cmd.select (Actor) {
+		near-player Actor
+		talks Actor _
+	}
+
+	cmd.do (Actor) {
+		talks Actor Entry
+	} -> {
+		println: "Talking to **{name:Actor}**"
+		subgame.push: "talk" Entry
+	}
+
+}
+

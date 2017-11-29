@@ -1,0 +1,41 @@
+
+Debug {
+
+cmd.debug "room" () {
+	room *Player Room
+	room Thing Room
+} -> {
+	print: "**{Thing}** ({name:Thing}), "
+}
+
+cmd.debug "inv" () {
+	has *Player Thing
+} -> {
+	print: "**{Thing}** ({name:Thing}), "
+}
+
+cmd.debug "flag" () {
+	flag Flag
+} -> {
+	print: "**{Flag}**, "
+}
+
+entity Debug-Umbrella {
+	item; umbrella;
+	keyword "debug umbrella", "umbrella"
+	name "umbrella (debug)"
+	desc "Umbrella given to you by a higher force"
+	taken
+}
+
+cmd.debug "scabin" () {
+} -> {
+	println: "Warping player to **scabin entrance**"
+	println: "Spawning **umbrella (debug)**"
+	! room *Player _
+	room *Player *Scabin.Entrance.R
+	room *Debug-Umbrella *Scabin.Entrance.R 
+}
+
+}
+

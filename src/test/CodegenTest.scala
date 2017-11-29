@@ -30,19 +30,32 @@ object CodegenTest extends App {
       | entity Foo
       | entity Sword { item }
       |
-      | has Foo Sword
+      | has Player Sword
+      |
+      | table name self name
+      | name Sword "Sword"
       |
       | define announce (Item) -> {
       |   print: "You pick up {Item}"
       | }
       |
+      | table has-item func
+      |
+      | has-item (Item) {
+      |   has *Player Item
+      |   has _ Item
+      |   name Item Name
+      | } -> {
+      |   print: "HAS ITEM {Name}!"
+      | }
+      |
       | entity get {
       |   cmd.command
       |   cmd.try (Item) {
-      |     item Item
-      |     ! has *Player Item
+      |     has-item Func
+      |     &Func Item
       |   } -> {
-      |     announce: Item
+      |     &Func Item
       |     has *Player Item
       |   }
       | }
@@ -67,7 +80,8 @@ object CodegenTest extends App {
       val str = args(0).get.toString.asInstanceOf[CharSequence]
       val msg = templateRegex.replaceAllIn(str, m => {
         val ix = rule.bindNames.indexOf(m.group(1))
-        binds(ix).toString
+        println(binds.mkString(", "))
+        binds(ix).getOrElse("(NULL)").toString
       })
       println(">>> " + msg)
     }

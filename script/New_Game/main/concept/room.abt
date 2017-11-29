@@ -5,6 +5,19 @@ table room self room
 table link a b { unordered a b }
 table directed-link a b
 
+# Alternative text for the link target
+table link-to-text a text
+
 # Alternative text for the link
 table link-text a b text
+
+define near (A B) {
+	room A Room
+	room B Room
+}
+
+define near-player (A) {
+	room *Player Room
+	room A Room
+}
 

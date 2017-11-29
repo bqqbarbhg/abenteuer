@@ -1,0 +1,4 @@
+
+# Things players can "use", they define their own behaviour
+table usable self { unique self }
+

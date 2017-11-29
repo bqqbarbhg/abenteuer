@@ -1,0 +1,4 @@
+
+# Something that talks
+table talks self entry { unique self }
+

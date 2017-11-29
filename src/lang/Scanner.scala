@@ -16,31 +16,35 @@ case class SourceLocation(file: String, line: Int, column: Int, data: String) {
 abstract class Token {
   var locationImpl: SourceLocation = null
   def location: SourceLocation = locationImpl
+  def name: String
 }
 
-case class TokenId(id: String) extends Token
-case class TokenNumber(value: Int) extends Token
+case class TokenId(id: String) extends Token { def name: String = "identifier" }
+case class TokenNumber(value: Int) extends Token { def name: String = "number" }
 case class TokenString(value: String) extends Token {
   override def toString: String = s"""TokenString("${value.escape}")"""
+  def name: String = "string litral"
 }
-case class TokenEnd() extends Token
-case class TokenNewline(real: Boolean) extends Token
-case class TokenOpenBlock() extends Token
-case class TokenCloseBlock() extends Token
-case class TokenOpenParen() extends Token
-case class TokenCloseParen() extends Token
-case class TokenComma() extends Token
-case class TokenDot() extends Token
-case class TokenArrow() extends Token
-case class TokenNot() extends Token
-case class TokenValuePrefix() extends Token
-case class TokenColon() extends Token
+case class TokenEnd() extends Token { def name: String = "end of file" }
+case class TokenNewline(real: Boolean) extends Token { def name: String = if (real) "newline" else "statement terminator" }
+case class TokenOpenBlock() extends Token { def name: String = "block open" }
+case class TokenCloseBlock() extends Token { def name: String = "block close" }
+case class TokenOpenParen() extends Token { def name: String = "opening paren" }
+case class TokenCloseParen() extends Token { def name: String = "closing paren" }
+case class TokenComma() extends Token { def name: String = "comma" }
+case class TokenDot() extends Token { def name: String = "dot" }
+case class TokenArrow() extends Token { def name: String = "arrow" }
+case class TokenNot() extends Token { def name: String = "not" }
+case class TokenValuePrefix() extends Token { def name: String = "value prefix" }
+case class TokenColon() extends Token { def name: String = "colon" }
+case class TokenIndirectPrefix() extends Token { def name: String = "indirect prefix" }
+case class TokenWildcard() extends Token { def name: String = "wildcard" }
 
-case class KeywordTable() extends Token
-case class KeywordEntity() extends Token
-case class KeywordDefine() extends Token
-case class KeywordRule() extends Token
-case class KeywordExternal() extends Token
+case class KeywordTable() extends Token { def name: String = "keyword 'table'" }
+case class KeywordEntity() extends Token { def name: String = "keyword 'entity'" }
+case class KeywordDefine() extends Token { def name: String = "keyword 'define'" }
+case class KeywordRule() extends Token { def name: String = "keyword 'rule'" }
+case class KeywordExternal() extends Token { def name: String = "keyword 'external'" }
 
 object Scanner {
 
@@ -62,7 +66,7 @@ object Scanner {
   val tok_newline = (raw"""[\n;]""".r,
     (m: Match) => new TokenNewline(m.group(0) == "\n"))
 
-  val tok_operator = (s"[{}(),.!*:]|->".r,
+  val tok_operator = (s"[{}(),.!*:&_]|->".r,
     (m: Match) => m.group(0) match {
       case "{" => new TokenOpenBlock
       case "}" => new TokenCloseBlock
@@ -74,6 +78,8 @@ object Scanner {
       case "->" => new TokenArrow
       case "*" => new TokenValuePrefix
       case ":" => new TokenColon
+      case "&" => new TokenIndirectPrefix
+      case "_" => new TokenWildcard
     })
 
   val re_whitespace = raw"""[ \r\t]+|#[^\n]*|\\\r?\n""".r

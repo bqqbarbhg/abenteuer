@@ -21,7 +21,7 @@ object AstPrinter {
         s"entity ${entity.name.prettyPrint} $block"
 
       case define: AstDefine =>
-        val value = define.value.prettyPrint
+        val value = define.value.prettyPrint(indent)
         s"define ${define.name.prettyPrint} $value"
 
       case external: AstExternal =>
@@ -53,6 +53,9 @@ object AstPrinter {
       case query: AstQueryStmt =>
         s"${query.operator.prettyPrint()} ${query.values.map(_.prettyPrint(indent)).mkString(" ")}"
 
+      case query: AstIndirectQueryStmt =>
+        s"&${query.query.operator.prettyPrint()} ${query.query.values.map(_.prettyPrint(indent)).mkString(" ")}"
+
       case not: AstNotStmt =>
         "! " + not.stmt.prettyPrint()
 
@@ -62,8 +65,9 @@ object AstPrinter {
       case t: AstExName => t.path.map(_.id).mkString(".")
       case t: AstExString => '"' + t.token.value.escape + '"'
       case t: AstExNumber => t.token.value.toString
+      case t: AstExWildcard => "_"
       case t: AstExLambda =>
-          s"(${t.arguments.map(_.id).mkString(" ")}) ${t.pre.prettyPrint(indent + 1)} -> ${t.post.prettyPrint(indent + 1)}"
+          s"(${t.arguments.map(_.id).mkString(" ")}) ${t.pre.prettyPrint(indent)} -> ${t.post.prettyPrint(indent)}"
       case t: AstExValueName => "*" + t.name.prettyPrint
 
       }

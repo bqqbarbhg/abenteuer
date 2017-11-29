@@ -51,6 +51,31 @@ class RuleCondition(val otherRule: Rule, val mapping: Vector[Int]) extends Condi
   }
 }
 
+/**
+  * Query a dynamically bound value
+  * @param bindIndex Index of the binding (in our binds)
+  * @param mapping Translation of our binds and the arguments
+  */
+class IndirectCondition(val bindIndex: Int, val mapping: Vector[Int]) extends Condition {
+  def query(context: Context, rule: Rule, binds: db.Pattern): Iterator[db.Pattern] = {
+    val bind = binds(bindIndex) match {
+      case Some(bind) => bind
+      case None => throw new RuntimeException("Trying to query unbound indirect value!")
+    }
+    val args = rule.mapArgs(mapping, binds)
+    bind match {
+      case queryable: db.Queryable =>
+        val it = queryable.query(args)
+        new RemappingRowIterator(it, binds, mapping)
+      case other: vm.Rule =>
+        val it = other.query(args)
+        new RemappingPatternIterator(it, binds, mapping)
+      case other =>
+        throw new RuntimeException("Trying to query unqueryable value!")
+    }
+  }
+}
+
 object Rule {
 
   /** Used for mapping values returned from a query that returns data rows to the bound values of a rule.
@@ -139,7 +164,12 @@ class Rule(val context: Context, val bindNames: Vector[String], val argNames: Ve
   override def toString: String = s"Rule(${argNames.mkString(" ")})"
 
   def mapArgs(mapping: Vector[Int], binds: db.Pattern): db.Pattern = mapping.map(ix => {
-    if (ix >= 0) binds(ix) else Some(this.constants(-1 - ix))
+    if (ix >= 0)
+      binds(ix)
+    else if (ix == Int.MinValue)
+      None
+    else
+      Some(this.constants(-1 - ix))
   }).toArray
 
   def query(initialBinds: Pattern = Pattern()): Iterator[db.Pattern] = {

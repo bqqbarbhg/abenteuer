@@ -9,6 +9,8 @@ entity R {
 	flavor "A modest 8 square meter apartment, provided free-of-charge by the Aalto-Cola corporation. "
 }
 
+table mushy self
+
 entity Poster {
 	keyword "poster"
 	room R
@@ -18,6 +20,21 @@ entity Poster {
 	flavor "Good old Z' = Z^2 + C, in color. "
 	item
 }
+
+cmd.overload command.drop Poster (Poster) {
+	room *Player Room
+	raining Room
+	! mushy Poster
+} -> {
+	print: "The rain ruins the **{name:Poster}** and it becomes a mushy ball of paper. "
+	mushy Poster
+} 10
+
+cmd.overload command.inspect Poster (Poster) {
+	mushy Poster
+} -> {
+	print: "It's barely regocnizable anymore since it has got wet. "
+} 10
 
 entity Bed {
 	keyword "bed"
@@ -148,8 +165,8 @@ Ground-Floor {
 
 	entity R {
 		keyword "ground floor"
-		name "ground floor"
-		desc "Communal living space in the bottom floor"
+		name "ground floor (home)"
+		desc "Communal living space in the first floor of the house"
 		flavor "Usually full of life, but for some reason there is nobody here today. "
 	}
 
@@ -189,20 +206,18 @@ Ground-Floor {
 Outside {
 
 	entity R {
-		keyword "outside", "exit", "door"
-		name "outside"
+		keyword "outside hub", "outside", "hub"
+		name "outside hub"
 		desc "It's raining"
-		flavor "Usually full of life, but for some reason there is nobody here today. "
+		flavor "Heavy rain pours from the sky. "
 		raining
 	}
-
 
 }
 
 link Cell.R Hallway.R
 directed-link Ground-Floor.R Hallway.R
 link Ground-Floor.R Outside.R
-link-text Ground-Floor.R Outside.R "You walk **outside**"
 
 }
 

@@ -83,7 +83,7 @@ class ParserBase(val scanner: Scanner) {
     * @return Never returns.
     */
   def expectedHere(expected: String): Nothing = {
-    errorHere(s"Unexpected token ${token.toString}, expected $expected")
+    errorHere(s"Unexpected ${token.name}, expected $expected")
   }
 
   /**

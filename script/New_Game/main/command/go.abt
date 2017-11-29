@@ -30,6 +30,13 @@ entity command.go {
 		fail:
 	} 10
 
+	cmd.do (Link) {
+		link-to-text Link Text
+	} -> {
+		println: Text
+		fail:
+	} 11
+
 	cmd.do (Link) -> {
 		println: "You walk to **{name:Link}**"
 	} 15

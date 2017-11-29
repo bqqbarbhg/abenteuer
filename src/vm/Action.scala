@@ -24,6 +24,23 @@ class TableDeleteAction(val table: Table, mapping: Vector[Int]) extends Action {
   }
 }
 
+class IndirectAction(val bindIndex: Int, mapping: Vector[Int]) extends Action {
+  def run(rule: Rule, binds: db.Pattern): Unit = {
+    val args = rule.mapArgs(mapping, binds).toArray
+    val bind = binds(bindIndex) match {
+      case Some(bind) => bind
+      case None => throw new RuntimeException("Trying to execute action on unbound indirect value!")
+    }
+    bind match {
+      case rule: vm.Rule =>
+        rule.query(args).foreach(rule.execute(_))
+      case other =>
+        throw new RuntimeException("Trying to indirectly execute unspported value!")
+    }
+
+  }
+}
+
 class ExternalFuncAction(val func: ExternalFunc, mapping: Vector[Int]) extends Action {
   def run(rule: Rule, binds: db.Pattern): Unit = func(rule, binds, mapping)
 }

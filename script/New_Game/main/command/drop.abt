@@ -13,7 +13,7 @@ entity command.drop {
 	} -> {
 		! has *Player Thing
 		room Thing Room
-		print: "Dropped **{name:Thing}** to **{name:Room}**"
+		println: "Dropped **{name:Thing}** to **{name:Room}**"
 	}
 }
 

@@ -18,6 +18,7 @@ case class AstFreeQuery(queries: Vector[AstQueryStmt]) extends AstNode(queries(0
 
 abstract class AstStmt(representingToken: Token) extends AstNode(representingToken)
 case class AstQueryStmt(operator: AstExName, values: Vector[AstEx]) extends AstStmt(operator.path(0))
+case class AstIndirectQueryStmt(query: AstQueryStmt, ind: Token) extends AstStmt(ind)
 case class AstNotStmt(stmt: AstStmt, not: TokenNot) extends AstStmt(not)
 case class AstActionStmt(query: AstQueryStmt) extends AstStmt(query.representingToken)
 
@@ -25,6 +26,7 @@ abstract class AstEx(representingToken: Token) extends AstNode(representingToken
 case class AstExName(path: Vector[TokenId]) extends AstEx(path(0))
 case class AstExString(token: TokenString) extends AstEx(token)
 case class AstExNumber(token: TokenNumber) extends AstEx(token)
+case class AstExWildcard(token: TokenWildcard) extends AstEx(token)
 case class AstExLambda(arguments: Vector[TokenId], pre: AstStmtBlock, post: AstStmtBlock, firstToken: Token) extends AstEx(firstToken)
 case class AstExValueName(name: AstExName, firstToken: Token) extends AstEx(firstToken)
 
@@ -57,11 +59,13 @@ object Parser {
             | query-stmt
             | <newline> ;
 
-  query-stmt = ex-name ":"? query-tuple ("," query-tuple)* ;
+  query-stmt = ex-name ":"? query-tuple ("," query-tuple)*
+             | "&" ex-name query-tuple ("," query-tuple)* ;
+
   query-tuple = expr* ;
   query-body = "{" ( "!"? query-stmt* | <newline> ) "}"
 
-  expr = STRING | NUMBER | ex-name | ex-lambda | ex-value ;
+  expr = STRING | NUMBER | "_" | ex-name | ex-lambda | ex-value ;
   ex-name = ID ( "." ID )*
   ex-lambda = "(" ID* ")" query-body? ("->" query-body)?
   ex-value = "*" ex-name
@@ -89,7 +93,7 @@ class Parser(scanner: Scanner) extends ParserBase(scanner) {
         val queries = finishQueryStmt(name)
         Some(new AstFreeQuery(queries))
       }
-    case TokenNewline() => None
+    case TokenNewline(_) => None
   }
 
   def finishTable(): AstTable = {
@@ -131,7 +135,7 @@ class Parser(scanner: Scanner) extends ParserBase(scanner) {
     case open: TokenOpenBlock =>
       val stmt = untilAccept(context, { case TokenCloseBlock() => true }) {
         val ast: Option[Vector[AstStmt]] = accept[Option[Vector[AstStmt]]] {
-          case TokenNewline() => None
+          case TokenNewline(_) => None
         }.getOrElse(Some(parseStmt()))
         ast
       }.flatten.flatten.toVector
@@ -140,6 +144,10 @@ class Parser(scanner: Scanner) extends ParserBase(scanner) {
 
   def parseStmt(): Vector[AstStmt] = require("query statement") {
     case not: TokenNot => parseStmt().map(a => new AstNotStmt(a, not))
+    case ind: TokenIndirectPrefix =>
+      val id = require("indirect query name") { case t: TokenId => t }
+      val name = finishName(id)
+      finishQueryStmt(name).map(a => new AstIndirectQueryStmt(a, ind))
     case id: TokenId =>
       val name = finishName(id)
       accept[Vector[AstStmt]] {
@@ -162,6 +170,7 @@ class Parser(scanner: Scanner) extends ParserBase(scanner) {
     case t: TokenId => finishName(t)
     case t: TokenString => new AstExString(t)
     case t: TokenNumber => new AstExNumber(t)
+    case t: TokenWildcard => new AstExWildcard(t)
     case t: TokenOpenParen => finishLambda(t)
     case t: TokenValuePrefix =>
       val nameBegin = require("value name") { case id: TokenId => id }

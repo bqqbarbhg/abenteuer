@@ -82,6 +82,9 @@ game {
 # Keywords to describe entities
 table keyword self kw { shared }
 
+# Ordering for selecting entities
+table select-order self order { shared }
+
 # Name
 table name self name { shared; unique self }
 

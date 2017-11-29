@@ -1,0 +1,15 @@
+
+entity command.use {
+	cmd.keyword "use"
+	cmd.abbrev "u" "use"
+	cmd.help "**use**: Use things"
+
+	cmd.select (Thing) {
+		room *Player Room
+		room Thing Room
+		usable Thing
+	}
+
+}
+
+

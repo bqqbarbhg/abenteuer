@@ -28,6 +28,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
   private val tabTick = context.query[Any, vm.Rule, Int]("tick") _
   private val tabName = context.query[vm.Entity, String]("name") _
   private val tabKeyword = context.query[vm.Entity, String]("keyword") _
+  private val tabSelectOrder = context.query[vm.Entity, Int]("select-order") _
   private val tabGameTitle = context.query[String]("game.title") _
   private val tabGameWelcome = context.query[String]("game.welcome") _
   private val tabSubgameInit = context.query[String, vm.Rule, Int]("subgame.init") _
@@ -248,18 +249,23 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
         discards(cmd).exists(rule => rule.query(db.Pattern(Some(entity))).nonEmpty)
       })
 
-      if (finalOptions.size == 0) {
+      val sortedOptions = finalOptions.map(pair => {
+        val order = tabSelectOrder(Some(pair.target), None).toStream.headOption.map(_._2).getOrElse(0)
+        (pair, order)
+      }).sortBy(_._2).map(_._1).toVector
+
+      if (sortedOptions.size == 0) {
         // No options -> fail
         GameText(fmt(s"Found nothing relevant to ${matchedKeyword}"), true)
-      } else if (finalOptions.size == 1 && restOfLine.nonEmpty) {
+      } else if (sortedOptions.size == 1 && restOfLine.nonEmpty) {
         // Single selected option -> execute command
-        val CmdTargetPair(entity, cmd) = finalOptions.head
+        val CmdTargetPair(entity, cmd) = sortedOptions.head
         executeCommandRule(cmd, Some(entity))
       } else {
         // Multiple or unselected options, show choices
-        commandUnderSelect = Some(DelayedCommand(finalOptions, line, restOfLine.nonEmpty))
+        commandUnderSelect = Some(DelayedCommand(sortedOptions, line, restOfLine.nonEmpty))
 
-        val names = for ((option, index) <- finalOptions.zipWithIndex) yield {
+        val names = for ((option, index) <- sortedOptions.zipWithIndex) yield {
           val name = tabName(Some(option.target), None).toStream.headOption.map(_._2).getOrElse("(unknown)")
           s"${index + 1}. ${name}"
         }

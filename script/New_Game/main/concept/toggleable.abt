@@ -1,0 +1,39 @@
+
+toggle {
+	table togglable self { unique self }
+	table is-on self { unique self }
+	table on self func
+	table off self func
+
+	cmd.do command.use (Device) {
+		togglable Device
+		is-on Device
+		off Device Func
+	} -> {
+		&Func Device
+	}
+
+	cmd.do command.use (Device) {
+		togglable Device
+		is-on Device
+	} -> {
+		! is-on Device
+	}
+
+	cmd.do command.use (Device) {
+		togglable Device
+		! is-on Device
+		on Device Func
+	} -> {
+		&Func Device
+	}
+
+	cmd.do command.use (Device) {
+		togglable Device
+		! is-on Device
+	} -> {
+		is-on Device
+	}
+	
+}
+
