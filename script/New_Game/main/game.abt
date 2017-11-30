@@ -8,6 +8,8 @@ At any point type **help** to get a list of commands.
 "
 game.start-autocommand "look"
 
-subgame.external-game "proto_otaniemi_2167" "Otaniemi_2167" "main"
+subgame.external-game "proto_otaniemi_2167" "Otaniemi_2167"
+subgame.external-game "proto_first" "First_Proto"
+
 subgame.game "talk" "talk"
 

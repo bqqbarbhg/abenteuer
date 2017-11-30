@@ -1,0 +1,35 @@
+
+table game.title title
+table game.welcome welcome
+
+game.title "Abenteuer"
+
+game.welcome "Welcome to **Abenteuer** - text adventure.
+
+At any point type **help** to get a list of available commands.
+
+(Or /help for developer commands)"
+
+subgame.init "" () {
+	game.welcome Welcome
+} -> {
+	print: "First prototype game."
+	print: "This is a very simple test of the language.\n"
+	print: "Use **exit** to return to the main game.\n\n"
+	print: Welcome
+}
+
+entity is-subgame
+
+subgame.init "" () {
+	! flag *is-subgame
+} -> {
+	flag *is-subgame
+}
+
+subgame.fini () -> {
+	print: "Thank you for playing the first prototype!"
+}
+
+table flag flag
+

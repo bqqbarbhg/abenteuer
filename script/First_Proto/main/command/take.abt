@@ -1,0 +1,47 @@
+
+entity take {
+	cmd.keyword "take", "pick up", "lift", "get"
+	cmd.help "**take**: Pick up objects"
+	cmd.abbrev "t" "take"
+
+	cmd.select (Thing) {
+		room *Player Room
+		room Thing Room
+		item Thing
+		! has Anyone Thing
+	}
+
+	cmd.do (Thing) {
+		name Thing Name
+		room Thing Room
+	} -> {
+		has *Player Thing
+		! room Thing Room
+		print: "Picked up **{Name}**"
+	}
+}
+
+entity drop {
+	cmd.keyword "drop", "leave"
+	cmd.help "**drop**: Drop an object you're holding"
+
+	cmd.select (Thing) {
+		has *Player Thing
+	}
+
+	cmd.do (Thing) {
+		name Thing Name
+		room *Player Room
+	} -> {
+		! has *Player Thing
+		room Thing Room
+		print: "Dropped **{Name}**"
+	}
+}
+
+# An object that can be picked up
+table item self
+
+# Who is holding what
+table has self item
+

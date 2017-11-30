@@ -64,7 +64,9 @@ table tick id func order {
 # Games inside the game
 subgame {
 	table game name module
-	table external-game name path module
+	table external-game name path module {
+		default module "main"
+	}
 	table init name func order {
 		default order 0
 	}

@@ -21,7 +21,8 @@ subgame.init "" () {
 	game.welcome Welcome
 } -> {
 	print: "Second prototype game."
-	print: "Sorry for the terrible edgyness!\n\n"
+	print: "Sorry for the terrible edgyness!\n"
+	print: "Use **exit** to return to the main game.\n\n"
 	print: Welcome
 }
 

@@ -1,0 +1,9 @@
+
+table room self room
+table link a b
+
+define near (A B) {
+	room A Room
+	room B Room
+}
+

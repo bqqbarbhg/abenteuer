@@ -1,0 +1,9 @@
+
+entity xyzzy {
+	cmd.keyword "xyzzy"
+
+	cmd.do () -> {
+		print: "Nothing happens..."
+	}
+}
+

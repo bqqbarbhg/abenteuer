@@ -1,0 +1,84 @@
+
+entity Entrance {
+	keyword "entrance", "hall"
+	name "Entrance Hall"
+	description "The main entrance hall of some building"
+	flavor "A bright light shines from the windows on the wall", \
+	"It looks like this place has been empty for a while"
+}
+
+entity Corridor {
+	keyword "corridor", "hole", "dark"
+	name "Dark corridor"
+	description "Some dark hole in the wall"
+}
+
+entity Office {
+	keyword "room", "office"
+	name "Office room"
+	description "Some kind of office room"
+}
+
+entity Office-Door {
+	object; lookable
+	name "Office door"
+	keyword "office", "door"
+	description "A locked office door"
+	door Entrance Office, Office Entrance
+	room Entrance, Office
+	lock Office-Key-Type
+	pickable-lock
+}
+
+entity Office-Key-Type {
+	name "an office key"
+}
+
+link Entrance Corridor, Corridor Entrance
+link Entrance Office, Office Entrance
+
+# Main player singleton instance
+entity Player {
+	object
+
+	keyword "self", "player", "me"
+	name "Player"
+	description "This is me"
+
+	room Entrance
+}
+
+entity Barrel {
+	object
+	keyword "barrel"
+	name "Barrel"
+	description "A boring barrel"
+	flavor "Cobwebs line the barrel edges"
+}
+
+entity Barrel2 {
+	object
+	keyword "barrel"
+	name "Barrel (shiny)"
+	description "Distinctively unique barrel"
+	flavor "It looks recently polished"
+}
+
+entity Key {
+	object; item
+	keyword "key"
+	name "Master key"
+	description "A cool key that opens some doors"
+	flavor "The key's handle is carved into a shape of an skull"
+	room Entrance
+	key Office-Key-Type
+}
+
+entity Lockpick {
+	object; item; lockpick
+	keyword "lockpick", "pick"
+	name "Lockpick"
+	description "A standard lockpick"
+	room Corridor
+}
+

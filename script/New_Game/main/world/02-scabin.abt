@@ -161,6 +161,10 @@ Prototype-Room {
 		flavor "It has some sort of sticker on top of the monitor saying \"dystopian prototype\". "
 	}
 
+	cmd.overload command.use Computer-Test (Computer) -> {
+		subgame.push: "proto_first" ""
+	}
+
 	cmd.overload command.use Computer-Dystopian (Computer) -> {
 		subgame.push: "proto_otaniemi_2167" ""
 	}

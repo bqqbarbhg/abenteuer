@@ -1,0 +1,25 @@
+
+entity go {
+	cmd.keyword "go", "move"
+	cmd.abbrev "g" "go"
+	cmd.abbrev "cd" "go"
+
+	cmd.help "**go**: Go somewhere else"
+
+	cmd.select (Link) {
+		room *Player Room
+		link Room Link
+	}
+
+	cmd.do (Link) {
+		room *Player Room
+		name Link Name
+		description Link Desc
+	} -> {
+		room *Player Link
+		! room *Player Room
+		print: "Walked to {Name} - {Desc}"
+	}
+
+}
+
