@@ -7,6 +7,7 @@ import util.EscapeUtil.EscapedString
 
 import scala.util.Try
 import scala.collection.mutable
+import scala.annotation.tailrec
 
 /**
   * Simple (very bad) HTML server implementation for the game.
@@ -68,21 +69,33 @@ object GameServer extends App {
     val command = content.trim
     println(s"$sessionNum> ${command.escape}")
 
-    val result = theGame.interact(command)
+    @tailrec
+    def processCommand(command: String, prev: Vector[String] = Vector[String]()): Vector[String] = {
+      val result = theGame.interact(command)
 
-    val spans = result.spans.map(spanToJson).mkString(", ")
-    val overridePrompt = result.overridePrompt.map(a => "\"" + a.escape + "\"").getOrElse("null")
-    val autoCommand = result.autoCommand.map(a => "\"" + a.escape + "\"").getOrElse("null")
+      val spans = result.spans.map(spanToJson).mkString(", ")
+      val overridePrompt = result.overridePrompt.map(a => "\"" + a.escape + "\"").getOrElse("null")
+      val autoCommand = result.autoCommand.map(a => "\"" + a.escape + "\"").getOrElse("null")
 
-    val body =
-      s"""
-         |{
-         |  "spans": [$spans],
-         |  "ephemeral": ${result.ephemeral},
-         |  "overridePrompt": $overridePrompt,
-         |  "autoCommand": $autoCommand
-         |}
+      val body =
+        s"""
+           |{
+           |  "spans": [$spans],
+           |  "ephemeral": ${result.ephemeral},
+           |  "overridePrompt": $overridePrompt,
+           |  "autoCommand": $autoCommand
+           |}
        """.stripMargin
+
+      val next = prev :+ body
+      result.autoCommand match {
+        case Some(cmd) => processCommand(cmd, next)
+        case None => next
+      }
+    }
+
+    val parts = processCommand(command)
+    val body = s"""{ "parts": [${parts.mkString(",\n")}] }"""
 
     val date = java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(java.time.ZonedDateTime.now(java.time.ZoneId.of("GMT")))
 

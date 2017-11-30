@@ -1,7 +1,8 @@
 
-game.title "New Game"
+game.title "Spaghettification"
 
 game.welcome "
+**Spaghettification**
 Built using **Abenteuer**
 
 At any point type **help** to get a list of commands.

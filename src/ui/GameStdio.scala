@@ -19,7 +19,9 @@ object GameStdio extends App {
     appendSpans(result.spans)
 
     result.autoCommand match {
-      case Some(cmd) => processCommand(cmd, false)
+      case Some(cmd) =>
+        println("")
+        processCommand(cmd, false)
       case None =>
     }
   }
