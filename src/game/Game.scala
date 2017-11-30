@@ -174,7 +174,8 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
   private val tokenRegex = raw"""[a-z]+""".r
   private var commandUnderSelect: Option[DelayedCommand] = None
 
-  private val stopWords = Set("to", "with", "at", "the", "a", "an")
+  /** Words to ignore in the commands */
+  private val stopWords = Set("to", "with", "through", "at", "the", "a", "an")
 
   private def runCommand(command: String): GameText = {
     val lower = command.toLowerCase
