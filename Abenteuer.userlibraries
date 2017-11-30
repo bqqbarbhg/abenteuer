@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eclipse-userlibraries>
+  <library name="scala-swing_2.12-2.0.0">
+    <archive path="D:/Dev/O1/Abenteuer/bin/scala-swing_2.12-2.0.0.jar" />
+  </library>
+  <library name="scala-sdk-2.12.3">
+    <archive path="C:/Users/Datacube/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.12.3.jar" />
+    <archive path="C:/Users/Datacube/.ivy2/cache/org.scala-lang/scala-reflect/jars/scala-reflect-2.12.3.jar" />
+    <archive path="C:/Users/Datacube/.ivy2/cache/org.scala-lang/scala-library/srcs/scala-library-2.12.3-sources.jar" />
+    <archive path="C:/Users/Datacube/.ivy2/cache/org.scala-lang/scala-reflect/srcs/scala-reflect-2.12.3-sources.jar" />
+  </library>
+</eclipse-userlibraries>
+

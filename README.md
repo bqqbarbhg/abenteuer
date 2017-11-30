@@ -5,6 +5,8 @@ Text adventure for Aalto University Ohjelmointi 1 MOOC.
 I've had an idea of using a declarative language to describe some sort of simulation game,
 so this seemed like a good opportunity to build a prototype.
 
+There's a live version of the game at [http://ab.dorfbook.com][ab-dorfbook]
+
 Building
 --------
 
@@ -685,4 +687,5 @@ phases.
 
 [vim]: http://vim.org
 [wiki-ebnf]: https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form
+[ab-dorfbook]: http://ab.dorfbook.com
 
