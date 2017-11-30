@@ -4,7 +4,7 @@ Scabin {
 Entrance {
 
 entity R {
-	keyword "scabin entrance", "entrance", "scabin", "cabin"
+	keyword "scabin entrance"
 	name "scabin entrance"
 	desc "Server cabin, home of the AI"
 	flavor "This is where the AI was contained to after it tried to spread outside of its enclosure. "
@@ -44,6 +44,7 @@ cmd.overload command.go-door Basement-Door (Door) {
 	! room *Player Room
 	room *Player *Basement.R
 	println: "The heavy door clunks open and lets you proceed downstairs to **scabin basement**"
+	auto-command: "look"
 }
 
 }
@@ -126,6 +127,7 @@ Basement {
 		println: "It leads you to **computer room**. "
 		! room *Player _
 		room *Player *Prototype-Room.R
+		auto-command: "look"
 	}
 
 }
@@ -135,6 +137,7 @@ Prototype-Room {
 	entity R {
 		keyword "computer room"
 		name "computer room"
+		desc "A well protected room next to the Scabin basement"
 		flavor "There are some computers in the room. "
 	}
 
@@ -165,7 +168,13 @@ Prototype-Room {
 }
 
 link Entrance.R Tutorial.Outside.R
+link-keyword Tutorial.Outside.R Entrance.R "scabin"
+link-keyword Tutorial.Outside.R Entrance.R "cabin"
+
 directed-link Basement.R Entrance.R
+link-keyword Basement.R Entrance.R "entrance"
+link-keyword Basement.R Entrance.R "upstairs"
+
 directed-link Prototype-Room.R Basement.R
 
 }

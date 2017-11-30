@@ -1,6 +1,6 @@
 
 entity command.drop {
-	cmd.keyword "drop", "leave"
+	cmd.keyword "drop", "leave", "drop down"
 	cmd.help "**drop**: Drop an object you're holding"
 	cmd.abbrev "d" "drop"
 

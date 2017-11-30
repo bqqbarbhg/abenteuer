@@ -1,32 +1,36 @@
 package ui
 
+import scala.annotation.tailrec
+
 object GameStdio extends App {
   val theGame = new game.Game()
 
-  def appendSpans(spans: Seq[TextSpan]) = spans.foreach(span => print(span.text))
+  def style(span: TextSpan): String = span.style match {
+    case TextStyle.Normal => span.text
+    case TextStyle.Bold => s"*${span.text}*"
+  }
+  def appendSpans(spans: Seq[TextSpan]) = spans.foreach(span => print(style(span)))
 
-  val hello = theGame.interact("/hello")
-  appendSpans(hello.spans)
+  @tailrec
+  def processCommand(command: String, showPrompt: Boolean): Unit = {
+    var result = theGame.interact(command)
+    if (showPrompt)
+      result.overridePrompt.foreach(prompt => println(s"> $prompt"))
+    appendSpans(result.spans)
+
+    result.autoCommand match {
+      case Some(cmd) => processCommand(cmd, false)
+      case None =>
+    }
+  }
+
+  processCommand("/hello", false)
 
   while (true) {
     Console.print("\n> ")
     Console.flush()
 
     val line = scala.io.StdIn.readLine()
-
-    var result = theGame.interact(line)
-    // In case the game wants to override the user prmpt, print it!
-    // Sadly, we can't replace already printed lines of the standard output.
-    result.overridePrompt.foreach(prompt => println(s"> $prompt"))
-    appendSpans(result.spans)
-
-    // Run autoCommands
-    while (result.autoCommand.isDefined) {
-      val command = result.autoCommand.get
-      result = theGame.interact(command)
-      val prompt = result.overridePrompt.getOrElse(command)
-      println(s"\n> $prompt")
-      appendSpans(result.spans)
-    }
+    processCommand(line, true)
   }
 }

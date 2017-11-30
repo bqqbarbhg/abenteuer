@@ -86,7 +86,8 @@ cmd.overload command.go Earth (Earth) -> {
 	! asleep *Player
 	! room *Player *Earth
 	room *Player *Cell.R
-} 20
+	fail:
+} 12
 
 }
 
@@ -97,7 +98,6 @@ entity R {
 	name "hallway"
 	desc "Apartment block hall, floor 3"
 	flavor "There are countless apartments, just like yours. "
-	flavor "One of the doors is slightly open. "
 }
 
 entity Scribble {
@@ -155,6 +155,7 @@ cmd.overload command.go-door Emergency-Exit (Exit) {
 	print: "It leads to the **ground floor**."
 	! room *Player Room
 	room *Player *Ground-Floor.R
+	auto-command: "look"
 }
 
 }
@@ -216,8 +217,12 @@ Outside {
 }
 
 link Cell.R Hallway.R
+
 directed-link Ground-Floor.R Hallway.R
+link-keyword Ground-Floor.R Hallway.R "upstairs"
+
 link Ground-Floor.R Outside.R
+link-keyword Outside.R Ground-Floor.R "home"
 
 }
 

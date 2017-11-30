@@ -11,6 +11,9 @@ table link-to-text a text
 # Alternative text for the link
 table link-text a b text
 
+# Alternative keywords for links
+table link-keyword a b kw
+
 define near (A B) {
 	room A Room
 	room B Room

@@ -1,9 +1,10 @@
 
 # This is the main player instance
 entity Player {
-	keyword "self", "me", "player"
+	keyword "self", "you", "me", "player"
 	name "you"
 	desc "Yes, you"
+	select-order 1000
 }
 
 room Player Tutorial.Cell.R

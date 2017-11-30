@@ -21,6 +21,8 @@ entity command.go-to-bed {
 		asleep *Player
 		print: "You go to bed and immediately fall asleep. "
 		print: "The room fades into darkness and you feel weightless. "
+		auto-command: "look"
+		fail:
 	}
 
 }

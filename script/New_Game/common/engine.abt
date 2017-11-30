@@ -78,6 +78,7 @@ subgame {
 game {
 	table title title
 	table welcome welcome
+	table start-autocommand cmd
 }
 
 

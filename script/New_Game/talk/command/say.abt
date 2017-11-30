@@ -13,6 +13,11 @@ entity command.say {
 		reply Line State
 	}
 
+	cmd.discard (Line) {
+		requires Line Cond
+		! &Cond Line
+	}
+
 	cmd.do (Line) {
 		goto Line New-State
 	} -> {
@@ -20,17 +25,16 @@ entity command.say {
 		active-state New-State
 	}
 
-	cmd.do (Line) -> {
-		println: ""
-	} 1
-
 	cmd.do (Line) {
 		name Line Name
 	} -> {
 		println: "**you**: {Name}"
 	} 1
 
-	cmd.do (Line) -> {
+	cmd.do (Line) {
+		line Line Response
+	} -> {
+		once:
 		println: ""
 	} 2
 

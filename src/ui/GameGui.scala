@@ -4,6 +4,7 @@ import javax.swing.SpringLayout.Constraints
 
 import scala.swing._
 import scala.swing.event._
+import scala.annotation.tailrec
 import javax.swing.UIManager
 import javax.swing.text.StyleConstants
 
@@ -58,9 +59,6 @@ object GameGui extends SimpleSwingApplication {
     val lookView = new OutputView(look)
     val outputView = new OutputView(output)
 
-    val hello = theGame.interact("/hello")
-    outputView.appendSpans(hello.spans)
-
     def updateLook(): Unit = {
       return
       lookView.doc.remove(0, lookView.doc.getLength)
@@ -69,46 +67,51 @@ object GameGui extends SimpleSwingApplication {
 
     updateLook()
 
+    @tailrec
+    def processCommand(command: String, showPrompt: Boolean): Unit = {
+      val doc = outputView.doc
+      val spacer = outputView.spacer
+      val faded = outputView.faded
+
+      for (begin <- ephemeralBegin) {
+        doc.remove(begin, doc.getLength - begin)
+        ephemeralBegin = None
+      }
+
+      val begin = doc.getLength
+      val result = theGame.interact(command)
+      val prompt = result.overridePrompt.getOrElse(command)
+
+      if (showPrompt) {
+        doc.insertString(doc.getLength, "\n", spacer)
+        doc.insertString(doc.getLength, "\n", spacer)
+        doc.insertString(doc.getLength, s"> ${prompt}\n", faded)
+        doc.insertString(doc.getLength, "\n", spacer)
+      }
+
+      outputView.appendSpans(result.spans)
+      if (result.ephemeral)
+        ephemeralBegin = Some(begin)
+
+      doc.insertString(doc.getLength, "\n", spacer)
+
+      // Reset caret to end to enable autoscroll to bottom
+      output.caret.position = doc.getLength
+
+      result.autoCommand match {
+        case Some(cmd) => processCommand(cmd, false)
+        case None =>
+      }
+    }
+
+    processCommand("/hello", false)
+
     this.reactions += { case keyEvent: KeyPressed =>
         if (keyEvent.source == this.input && keyEvent.key == Key.Enter) {
           var command = this.input.text.trim
           this.input.text = ""
           if (command.nonEmpty) {
-            val doc = outputView.doc
-            val spacer = outputView.spacer
-            val faded = outputView.faded
-
-            var done = false
-            while (!done) {
-              for (begin <- ephemeralBegin) {
-                doc.remove(begin, doc.getLength - begin)
-                ephemeralBegin = None
-              }
-
-              val begin = doc.getLength
-              val result = theGame.interact(command)
-              val prompt = result.overridePrompt.getOrElse(command)
-
-              doc.insertString(doc.getLength, "\n", spacer)
-              doc.insertString(doc.getLength, "\n", spacer)
-              doc.insertString(doc.getLength, s"> ${prompt}\n", faded)
-              doc.insertString(doc.getLength, "\n", spacer)
-
-              outputView.appendSpans(result.spans)
-              if (result.ephemeral)
-                ephemeralBegin = Some(begin)
-
-              doc.insertString(doc.getLength, "\n", spacer)
-
-              result.autoCommand match {
-                case Some(cmd) => command = cmd
-                case None => done = true
-              }
-            }
-
-            // Reset caret to end to enable autoscroll to bottom
-            output.caret.position = doc.getLength
-
+            processCommand(command, true)
             updateLook()
           }
         }

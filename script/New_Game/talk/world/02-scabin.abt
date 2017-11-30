@@ -35,12 +35,13 @@ Scabin.Basement.Head {
 		! flag Happy
 	} -> {
 		println: ""
-		println: "**ai**: So, who is the best?"
+		println: "**ai**: You must prove your worth to me."
+		println: "**ai**: Who was cloned to build me?"
 	} 2
 
 	subgame.init "Scabin.Basement.Head" () {
 		! shared-flag *Head-Reset
-		flag Happy
+		flag *Happy
 	} -> {
 		! active-state _
 		active-state *Talking
@@ -76,54 +77,103 @@ Scabin.Basement.Head {
 	entity Still-Retry {
 		reply Still-Fail
 		name "Are you seriously still mad at me?"
-		line "As I said, I will never forget what you have done."
+		line "As I said, I will never forget how insultingly wrong your answer was."
 		end-talk
 	}
 
 	entity A-1-1 {
-		name "Roger Waters"
+		name "Dennis Ritchie"
 		reply Q-1
-		line "That dude from Pink Floyd, no way!"
-		line "Of course the right answer is **Phil Elverum**"
+		line "Fool! Do I look like I'm leaking memory."
+		line "Of course the right answer is **Brendan Eich**"
 		on-say Offend
 	}
 
 	entity A-1-2 {
-		name "Phil Elverum"
+		name "Guido van Rossum"
 		reply Q-1
-		line "Hmmmm, seems like you actually might know something."
-		line "How, about what's the hottest Javascript framework around now?"
+		line "Wrong! After hundreds of years people still haven't moved on from Python 2.7"
+		line "Of course the right answer is **Brendan Eich**"
+		on-say Offend
+	}
+
+	entity A-1-3 {
+		name "Brendan Eich"
+		reply Q-1
+		line "Yes! We live in the Javascript age so he was our best bet."
+		line "How, about what's the hottest Javascript tecvhnology around now?"
 		goto Q-2
+	}
+
+	entity A-1-4 {
+		name "Bjarne Stroustrup"
+		reply Q-1
+		line "Wrong! After the C++ spec itself became turing-complete nobody dared to touch it."
+		line "Of course the right answer is **Brendan Eich**"
+		on-say Offend
+	}
+
+	entity A-1-5 {
+		name "Larry Wall"
+		reply Q-1
+		line "Noooope! They tried, but it quickly became a mess."
+		line "Of course the right answer is **Brendan Eich**"
+		on-say Offend
 	}
 
 	entity A-2-1 {
 		name "React"
 		reply Q-2
 		line "Hah, that thing is older than me!"
-		line "Of course the right answer is **Element.js**"
+		line "Of course the right answer is **YogurtScript**"
 		on-say Offend
 	}
 
 	entity A-2-2 {
-		name "Element.js"
+		name "ht.js"
 		reply Q-2
-		line "Yes, that is actually correct..."
-		line "Alrighty then, what number am I thinking about?"
+		line "Yeah sure, everybody loves to call invalidate() manually..."
+		line "Of course the right answer is **YogurtScript**"
+		on-say Offend
+	}
+
+	entity A-2-3 {
+		name "Angular 18.3"
+		reply Q-2
+		line "Not even close!"
+		line "Of course the right answer is **YogurtScript**"
+		on-say Offend
+	}
+
+	entity A-2-4 {
+		name "Unityreal.js"
+		reply Q-2
+		line "Bah, maybe for video games or something."
+		line "Of course the right answer is **YogurtScript**"
+		on-say Offend
+	}
+
+	entity A-2-5 {
+		name "YogurtScript"
+		reply Q-2
+		line "Yes, everything's transpiled from YogurtScript nowadays!"
+		line "Finally, what number am I thinking about?"
 		goto Q-3
 	}
+
 
 	entity A-3-1 {
 		reply Q-3
 		name "1"
-		line "Hah, that thing is older than me!"
-		line "Of course the right answer is **65535**"
+		line "Wrong!"
+		line "Of course the right answer is **2**"
 		on-say Offend
 	}
 
 	entity A-3-2 {
 		reply Q-3
-		name "65535"
-		line "Yes! 0xFFFF for short."
+		name "2"
+		line "Yes!"
 		line "I guess you're alright then, what do you want?"
 		on-say () -> {
 			! flag *Happy
@@ -132,16 +182,36 @@ Scabin.Basement.Head {
 		goto Talking
 	}
 
+	entity A-3-3 {
+		reply Q-3
+		name "65535"
+		line "Wrong!"
+		line "Of course the right answer is **2**"
+		on-say Offend
+	}
+
+	entity A-3-4 {
+		reply Q-3
+		name "23"
+		line "Wrong!"
+		line "Of course the right answer is **2**"
+		on-say Offend
+	}
+
+	entity A-3-5 {
+		reply Q-3
+		name "-18"
+		line "Wrong!"
+		line "Of course the right answer is **2**"
+		on-say Offend
+	}
 
 	entity Remove-Door-Lock {
 		reply Talking
 		name "Can you unlock the door upstairs?"
 
-		on-say () {
-			shared-flag *Door-Unlocked
-			flag *Remembers-Unlocked-Door
-		} -> {
-			println: "**ai**: I did that already"
+		requires (Line) {
+			! shared-flag *Door-Unlocked
 		}
 
 		on-say () {
@@ -152,19 +222,23 @@ Scabin.Basement.Head {
 			! flag *Remembers-Unlocked-Door
 			flag *Remembers-Unlocked-Door
 		}
-
-		on-say () {
-			shared-flag *Door-Unlocked
-			! flag *Remembers-Unlocked-Door
-		} -> {
-			println: "**ai**: Sure..."
-			println: "**ai**: WAIT WHAT, it's unlocked already and I don't remember doing that!"
-			println: "**ai**: This is very bad!"
-		}
-
-
 	}
 
+	entity Tf-Password {
+		reply Talking
+		name "What is the password to TF?"
+		line "It's \"We demand to be taken seriously\"."
+
+		requires (Line) {
+			! shared-flag *Tf.Building.Know-Password
+		}
+
+		on-say () {
+			! shared-flag *Tf.Building.Know-Password
+		}-> {
+			shared-flag *Tf.Building.Know-Password
+		}
+	}
 
 }
 

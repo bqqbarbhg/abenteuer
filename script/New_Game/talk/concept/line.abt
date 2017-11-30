@@ -7,4 +7,5 @@ table active-state self
 table active-actor self
 table line self text
 table end-talk self
+table requires self func
 

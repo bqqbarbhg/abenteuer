@@ -8,6 +8,15 @@ entity help {
 	} -> {
 		print: Help
 	}
+
+	cmd.do () {
+		flag *is-subgame
+	} -> {
+		print: "Note: You are currently in a sub-game!"
+		print: "**exit**: Close the game and return to the world"
+		print: ""
+	} -1
+
 	cmd.do() -> {
 		print: ""
 		print: "Hint: You can omit the target of the command to get a listing,

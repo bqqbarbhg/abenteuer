@@ -3,35 +3,60 @@ Tf {
 
 Building {
 
-entity R {
-	raining
-	keyword "tf"
-	name "tf"
-	desc "Home of the Tagliatelle Followers"
-	flavor "The concrete hall stands tall and proud in front of you. "
-	flavor "After the **spaghettification** drove away the Swedish speaking student nation out of this building it has housed the local spaghetti following cult of the same initials. "
+	entity R {
+		raining
+		keyword "tf"
+		name "tf (outside)"
+		desc "Home of the Tagliatelle Followers"
+		flavor "The concrete hall stands tall and proud in front of you. "
+		flavor "After the **spaghettification** drove away the Swedish speaking student nation out of this building it has housed the local spaghetti following cult of the same initials. "
+		flavor "It's raining. "
+	}
+
+	entity Door {
+		door
+		room R
+		keyword "entrance door", "entrance", "door", "inside"
+		name "entrance door"
+		desc "Metal door which leads into TF"
+		look "There is a huge **entrance door** that leads inside. "
+		flavor "An oversized door with a huge handle. "
+		flavor "Who would need a door this big? "
+	}
+
+	cmd.overload command.go-door Door (Door) {
+		! shared-flag *Said-Password
+	} -> {
+		println: "A **voice** from the inside interrupts you:"
+		subgame.push: "talk" "Tf.Building.Doorman"
+		auto-command: "say"
+	}
+
+	cmd.overload command.go-door Door (Door) {
+		shared-flag *Said-Password
+	} -> {
+		println: "The door opens for you and you enter **waiting room**"
+		! shared-flag *Said-Password
+		! room *Player _
+		room *Player *Waiting-Room.R
+		auto-command: "look"
+	}
+
 }
 
-entity Door {
-	door
-	room R
-	keyword "entrance door", "entrance", "door"
-	name "entrance door"
-	desc "Metal door which leads into TF"
-	look "There is a huge **entrance door** that leads inside. "
-	flavor "An oversized door with a huge handle. "
-	flavor "Who would need a door this big? "
-}
+Waiting-Room {
 
-cmd.overload command.go-door Door (Door) -> {
-	println: "**voice from inside**: \"What's the pasta-word?\""
-	println: "**you**: \"Pasta?\""
-	println: "(no response)"
-}
+	entity R {
+		keyword "waiting room"
+		name "waiting room"
+		desc "Winding path to the main hall of TF"
+	}
 
 }
 
 link Building.R Tutorial.Outside.R
+directed-link Waiting-Room.R Building.R
+link-keyword Waiting-Room.R Building.R "outside"
 
 }
 

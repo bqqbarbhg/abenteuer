@@ -37,5 +37,15 @@ cmd.debug "scabin" () {
 	room *Debug-Umbrella *Scabin.Entrance.R 
 }
 
+cmd.debug "tf" () {
+} -> {
+	println: "Warping player to **tf**"
+	println: "Spawning **umbrella (debug)**"
+	! room *Player _
+	room *Player *Tf.Building.R
+	has *Player *Debug-Umbrella
+	shared-flag *Tf.Building.Know-Password
+}
+
 }
 

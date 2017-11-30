@@ -15,11 +15,17 @@ entity command.go {
 		directed-link Room Link
 	}
 
+	cmd.add-keyword (Link Keyword) {
+		room *Player Room
+		link-keyword Room Link Keyword
+	}
+
 	cmd.do (Link) {
 		room *Player Room
 	} -> {
 		! room *Player Room
 		room *Player Link
+		auto-command: "look"
 	}
 
 	cmd.do (Link) {

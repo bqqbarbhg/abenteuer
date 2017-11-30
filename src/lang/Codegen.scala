@@ -352,6 +352,9 @@ class Codegen(val context: vm.Context) {
         table.insert(values)
 
       case t: AstNotStmt => error(t, "Inverted statements are not supported in definitions")
+      case t: AstActionStmt => error(t, "Action statements are not supported in definitions")
+      case t: AstIndirectQueryStmt => error(t, "Indirect query statements are not supported in definitions")
+      case other => error(other, "Unsupported statement in definition")
     }
   }
 

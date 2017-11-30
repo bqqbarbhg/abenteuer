@@ -1,0 +1,52 @@
+
+Tf.Building.Doorman {
+
+	subgame.init "Tf.Building.Doorman" () -> {
+		active-state *S.Password
+		active-actor "voice"
+		println: "**voice**: What's the pasta-word?"
+	}
+
+	S {
+		entity Password
+	}
+
+	R {
+		entity Wrong-1 {
+			reply S.Password
+			name "\"Pasta\"?"
+			end-talk
+		}
+
+		entity Wrong-2 {
+			reply S.Password
+			name "\"Bolognese\"?"
+			end-talk
+		}
+
+		entity Wrong-3 {
+			reply S.Password
+			name "\"Cheese\"?"
+			end-talk
+		}
+
+		entity Right {
+			reply S.Password
+			name "\"We demand to be taken seriously\"."
+
+			requires (Line) {
+				shared-flag *Know-Password
+			}
+
+			on-say () -> {
+				! shared-flag *Said-Password
+				shared-flag *Said-Password
+				auto-command: "go entrance door"
+			}
+
+			end-talk
+		}
+	}
+
+}
+

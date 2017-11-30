@@ -38,6 +38,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
   private val tabSelectOrder = context.query[vm.Entity, Int]("select-order") _
   private val tabGameTitle = context.query[String]("game.title") _
   private val tabGameWelcome = context.query[String]("game.welcome") _
+  private val tabGameStartAutocommand = context.query[String]("game.start-autocommand") _
   private val tabSubgameInit = context.query[String, vm.Rule, Int]("subgame.init") _
   private val tabSubgameFini = context.query[vm.Rule, Int]("subgame.fini") _
 
@@ -123,7 +124,8 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
 
         case "hello" =>
           val msg = tabGameWelcome(None).toStream.headOption.getOrElse("(no hello message defined)")
-          GameText(fmt(msg))
+          val au = tabGameStartAutocommand(None).toStream.headOption
+          GameText(fmt(msg), autoCommand = au)
 
         case "help" =>
           val msg =
@@ -172,10 +174,12 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
   private val tokenRegex = raw"""[a-z]+""".r
   private var commandUnderSelect: Option[DelayedCommand] = None
 
+  private val stopWords = Set("to", "with", "at", "the", "a", "an")
+
   private def runCommand(command: String): GameText = {
     val lower = command.toLowerCase
     val parts = tokenRegex.findAllIn(lower).toVector
-    val line = parts.mkString(" ")
+    val line = parts.filterNot(stopWords.contains(_)).mkString(" ")
 
     // If there is a selection prompt do it
     Try(lower.trim.toInt).toOption match {
@@ -242,7 +246,7 @@ class GameInstance(val path: String, val module: String = "main", val shared: vm
           }).toSeq
           val keywords = entityKeywords ++ addKeywords
 
-          keywords.exists(_ == restOfLine)
+          keywords.exists(_.startsWith(restOfLine))
         }).toVector
       } else {
         // Show all of them

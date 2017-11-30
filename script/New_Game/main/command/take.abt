@@ -1,6 +1,6 @@
 
 entity command.take {
-	cmd.keyword "take", "pick up", "lift", "get"
+	cmd.keyword "take", "pick up", "pick", "lift", "get"
 	cmd.help "**take**: Pick up objects"
 	cmd.abbrev "t" "take"
 
