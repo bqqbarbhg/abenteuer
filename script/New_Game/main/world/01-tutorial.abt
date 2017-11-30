@@ -16,7 +16,7 @@ entity Poster {
 	room R
 	name "poster"
 	desc "A poster of the Mandelbrot Set"
-	look "A **poster** of the Mandelbrot Set on hanged the wall. "
+	look "A **poster** of the Mandelbrot Set is hanged on the wall. "
 	flavor "Good old Z' = Z^2 + C, in color. "
 	item
 }
