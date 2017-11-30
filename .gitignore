@@ -39,6 +39,9 @@ cmake-build-debug/
 # IntelliJ
 out/
 
+# Eclipse stuff
+.cache-main
+
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
