@@ -40,10 +40,6 @@ case class NamedDefine(val value: AstEx, val ns: Namespace) extends NamedValue {
 }
 
 class Namespace(val parent: Option[Namespace], val name: String) {
-  if (name == "Head" && (!parent.isDefined || parent.get.fullName != "Scabin.Basement")) {
-    println("WHYYYY")
-  }
-
   val fullName: String = parent.map(n => n.namespaced(name)).getOrElse("")
 
   def namespaced(name: String) = if (fullName.nonEmpty) fullName + "." + name else name
