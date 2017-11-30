@@ -40,7 +40,7 @@ object GameGui extends SimpleSwingApplication {
       val bold = doc.addStyle("Bold", default)
       val faded = doc.addStyle("Faded", default)
       StyleConstants.setFontSize(default, 12)
-      StyleConstants.setFontSize(spacer, 3)
+      StyleConstants.setFontSize(spacer, 8)
       StyleConstants.setBold(bold, true)
       StyleConstants.setForeground(faded, new Color(0x555555))
 
