@@ -1,0 +1,32 @@
+
+table cola self
+table empty self
+table cola-rampage self
+
+cmd.do command.use (Cola) {
+	cola Cola
+	empty Cola
+} -> {
+	println: "There is no cola left here."
+	fail:
+} -10
+
+cmd.do command.use (Cola) {
+	cola Cola
+} -> {
+	empty Cola
+	cola-rampage *Player
+	println: "You drink the cola and feel the power flow through your veins!"
+}
+
+cmd.do command.inspect (Cola) {
+	cola Cola
+	empty Cola
+} -> {
+	print: "It has been drank empty. "
+} 10
+
+can-lift-if () {
+	cola-rampage *Player
+}
+

@@ -5,6 +5,9 @@ game.welcome "
 Built using **Abenteuer**
 
 At any point type **help** to get a list of commands.
+
+You receive a neuro-message: \"You must stop TF before they unleash th-\"
+
 "
 game.start-autocommand "look"
 

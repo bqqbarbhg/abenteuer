@@ -35,28 +35,142 @@ Building {
 	cmd.overload command.go-door Door (Door) {
 		shared-flag *Said-Password
 	} -> {
-		println: "The door opens for you and you enter **waiting room**"
+		println: "The door opens for you and you enter the **hall**"
 		! shared-flag *Said-Password
 		! room *Player _
-		room *Player *Waiting-Room.R
+		room *Player *Hall.R
 		auto-command: "look"
 	}
 
 }
 
-Waiting-Room {
+Hall {
 
 	entity R {
-		keyword "waiting room"
-		name "waiting room"
-		desc "Winding path to the main hall of TF"
+		keyword "hall"
+		name "hall"
+		desc "Main area of the TF bulding"
+		flavor "Rows of tables and chairs are setup ready for a feast. "
+	}
+
+	entity Monster {
+		room R, Upstairs.R
+		keyword "spaghetti monster", "monster", "flying spaghetti monster"
+		name "spaghetti monster"
+		desc "Sentient blob of spaghetti floating mid-air"
+		look "The **spaghetti monster** is floating in the middle of the room. "
+		flavor "Its body consists of arm-thick spaghetti noodles and a few human-sized meatballs. "
+		flavor "Two eyes extend from its body held by noodles. "
+		flavor "It seems like the Tagliatelle Followers finally succeeded in their ritual. "
+	}
+
+	entity Monster-Remains {
+		keyword "spaghetti monster", "monster", "flying spaghetti monster", "monster remains", "remains", "spaghetti remains", "spaghetti monster remains"
+		name "spaghetti monster remains"
+		desc "Bits of spaghetti all over the room"
+		look "The room is covered in **spaghetti monster remains**, it doesn't look good. "
+		flavor "Even though it's defeated the spaghetti still has an uncanny precense in the room. "
+	}
+
+	entity Table {
+		room R; item; heavy; usable
+		keyword "dining tables", "tables", "loose tables"
+		name "dining table"
+		desc "Just a normal dining table"
+		look "One of the **dining tables** looks loose. "
+		flavor "Seats up to 18 people. "
+		flavor "Looks extremely heavy, but potentially effective against the monster.  "
+	}
+
+	cmd.overload command.use Table (Table) {
+		room *Player *R
+		room *Monster *R
+	} -> {
+		println: "You can't reach the monster from here."
+		fail:
+	}
+
+	cmd.overload command.use Table (Table) {
+		room *Player *Upstairs.R
+		room *Monster *R
+	} -> {
+		print: "You leap from the ledge towards the **spaghetti monster** in your cola rage. "
+		print: "You swing the table at the monster with all your force. "
+		print: "The monster is defeated in an firework of pasta and sauce. "
+		print: "You fall to the floor and the effect of the cola wears off. "
+		println: ""
+		println: ""
+		println: "**Congratulations:** You beat the game!"
+		println: "Feel free to keep roaming around though."
+		println: ""
+		! room *Player _
+		! room *Monster *R
+		! cola-rampage *Player
+		! has *Player *Table
+		room *Table *R
+		room *Player *Hall.R
+		room *Monster-Remains *R
+		fail:
+	}
+
+	cmd.overload command.use Table (Table) -> {
+		println: "The table doesn't really have use here."
+	} 10
+
+}
+
+Upstairs {
+
+	entity R {
+		keyword "upstairs"
+		name "upstairs"
+		desc "Top floor of the area"
+		flavor "Not completely enclosed from the hall you still see the **spaghetti monster** flying, now at your level. "
+	}
+
+	entity Vending-Machine {
+		usable
+		room R
+		keyword "vending machine", "machine"
+		name "vending machine"
+		desc "Aalto-Cola branded vending machine"
+		look "There is a **vending machine** on to the wall. "
+		flavor "Dispenses a can of Aalto-Cola for a 90 credits. "
+	}
+
+	entity Cola {
+		item; taken; usable; cola
+		keyword "aalto cola", "cola"
+		name "aalto cola"
+		desc "A can of Aalto-Cola"
+		flavor "Grants you temporary enhanced cognitive and physical abilities. "
+	}
+
+	# Should have built arithmetic!
+	cmd.overload command.use Vending-Machine (VM) {
+		! credit-balance *Player 120
+	} -> {
+		println: "You don't have enough credits for the cola!"
+		fail:
+	} -10
+
+	# Should have built arithmetic!
+	cmd.overload command.use Vending-Machine (VM) -> {
+		! credit-balance *Player 120
+		credit-balance *Player 30
+		println: "90 credits have been deducted from your account."
+		println: "You receive a can of **aalto cola**"
+		has *Player *Cola
 	}
 
 }
 
 link Building.R Tutorial.Outside.R
-directed-link Waiting-Room.R Building.R
-link-keyword Waiting-Room.R Building.R "outside"
+directed-link Hall.R Building.R
+link-keyword Hall.R Building.R "outside"
+
+link Hall.R Upstairs.R
+link-keyword Upstairs.R Hall.R "downstairs"
 
 }
 

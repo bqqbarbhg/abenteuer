@@ -8,6 +8,13 @@ entity command.use {
 		room *Player Room
 		room Thing Room
 		usable Thing
+		! item Thing
+	}
+
+	cmd.select (Thing) {
+		has *Player Thing
+		usable Thing
+		item Thing
 	}
 
 }

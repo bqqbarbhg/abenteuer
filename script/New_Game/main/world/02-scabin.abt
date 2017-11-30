@@ -22,7 +22,7 @@ entity Sign {
 
 entity Basement-Door {
 	room R
-	keyword "basement door", "door", "basement"
+	keyword "basement door", "door", "basement", "down"
 	name "basement door"
 	desc "Door that leads to the basement where the AI resides"
 	look "The **basement door** that leads to the AI containment area. "

@@ -3,8 +3,12 @@
 entity Player {
 	keyword "self", "you", "me", "player"
 	name "you"
-	desc "Yes, you"
+	desc "A third month student in the Aalto-Cola corporation"
+	flavor "Only two months left until graduation! "
+	flavor "Mostly human with a few augmentations that can't stand water. "
+	flavor "Received a neuro-message about nefarious TF plans today, on a mission to stop them. "
 	select-order 1000
+	credit-balance 120
 }
 
 room Player Tutorial.Cell.R

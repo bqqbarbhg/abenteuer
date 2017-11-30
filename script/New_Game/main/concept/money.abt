@@ -1,0 +1,10 @@
+
+# How much credits does one own
+table credit-balance self amount { unique self }
+
+cmd.do command.inspect (Entity) {
+	credit-balance Entity Balance
+} -> {
+	print: "\nCredit balance: **{Balance}**"
+} 20
+

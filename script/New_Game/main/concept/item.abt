@@ -2,6 +2,17 @@
 # An item that can be picked up
 table item self { unique self }
 
+# Can't be picked up normally
+table heavy self { unique self }
+
+# Conditions when the player can lift something
+table can-lift-if func
+
+define can-lift () {
+	can-lift-if Func
+	&Func
+}
+
 # Ownership of items
 table has self item { unique item }
 
