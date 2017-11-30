@@ -45,15 +45,17 @@ go down
 Start up the AI and answer the questions. The puzzle here was to restart the AI every time
 it gets mad so it forgets. But since we're spoiling anyway here's the answers.
 
+If you mess up here type `say` to get back to the talking interface or `bye` to leave.
+
 ```
 use projector
 talk to head
-3
-5
-2
-1
-1
-1
+3 (Brendan Eich)
+5 (YogurtScript)
+2 (2)
+1 (Can you unlock the door upstairs?)
+1 (What is the password to TF?)
+1 (Bye.)
 ```
 
 If you want to see the prototypes fetch your key now and go to the locked door.
@@ -80,9 +82,11 @@ go to tf
 
 At the TF we need to use the password we got from the AI at the door. Try to enter to get to the conversation. If you don't have the option *"We demand to be taken seriously"* you need to go back to the AI part.
 
+If you mess up here type `say` to get back to the talking interface or `bye` to leave.
+
 ```
 go to door
-4
+4 ("We demand to be taken seriously".)
 ```
 
 When inside go upstairs and buy some Aalto-Cola and drink it. Then pick up a table from downstairs and defeat the monster!
