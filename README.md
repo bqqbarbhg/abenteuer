@@ -427,9 +427,9 @@ entity Player {
 }
 # Is same as:
 entity Player
-keyword "me"
-keyword "self"
-keyword "me"
+keyword Player, "me"
+keyword Player, "self"
+keyword Player, "me"
 # Also could be:
 keyword Player "me", Player "self", Player "me"
 ```
