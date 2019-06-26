@@ -502,8 +502,8 @@ has Player Sword
 }
 ```
 
-The query and action syntax looks similar and may even be exactly the same but still
-mean different, but very similar, things.
+The query and action syntax is pretty much equivalent, but they do opposite things.
+Queries filter based on the constraints, actions make the constraints happen.
 
 ```
 () {
